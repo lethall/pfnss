@@ -1,5 +1,10 @@
 import sys
 from tkinter import *
+# pip install pywin32 -> This will install the libs that are required
+import win32gui, win32con
+
+hide = win32gui.GetForegroundWindow()
+win32gui.ShowWindow(hide , win32con.SW_HIDE)
 
 with open("c:/work/git/pfnss/ss.log", "a") as f:
     print(f"got these args: {' '.join(sys.argv[1:])}", file=f)
