@@ -1,6 +1,10 @@
 import os
+from random import shuffle
+import sqlite3
 import sys
+from time import sleep
 from tkinter import *
+from tkinter import ttk
 
 from PIL import Image, ImageTk
 
@@ -10,29 +14,59 @@ from PIL import Image, ImageTk
 # hide = win32gui.GetForegroundWindow()
 # win32gui.ShowWindow(hide , win32con.SW_HIDE)
 
+home = os.getenv('HOME')
 #with open("c:/work/git/pfnss/ss.log", "a") as f:
-with open(f"{os.getenv('HOME')}/work/git/pfnss/ss.log", "a") as f:
+with open(f"{home}/work/git/pfnss/ss.log", "a") as f:
     print(f"got these args: {' '.join(sys.argv[1:])}", file=f)
 
 root = Tk()
 root.attributes("-fullscreen", True)
-#root.attributes("-alpha", 0.3)
 canvas = Canvas(root)
 canvas.pack(expand=1, fill="both")
 
 screenWidth = canvas.winfo_screenwidth()
 screenHeight = canvas.winfo_screenheight()
+screenRatio = screenWidth / screenHeight
+terminate = False
 
-# canvas.create_oval(100, 100, 200, 200, fill="red")
-img = ImageTk.PhotoImage(
-    Image.open("/Users/leehall/Pictures/2003/12/Unknown Location/2003-12-31_05-06-55-dsc00097.jpg")
-    .resize((screenWidth, screenHeight)))
-canvas.create_image(0, 0, image=img, anchor="nw")
+def display(fname, file_no):
+    global terminate
+    jpg = Image.open(fname)
+    w, h = jpg.size
+    img_ratio = w / h
+    if img_ratio < screenRatio:
+        h = screenHeight
+        w = h * img_ratio
+    else:
+        w = screenWidth
+        h = w / screenRatio
+    img = ImageTk.PhotoImage(jpg.resize((int(w), int(h))))
+    x = int((screenWidth - w) / 2) if w < screenWidth else 0
+    y = int((screenHeight - h) / 2) if h < screenHeight else 0
+    c_i = canvas.create_image(x, y, image=img, anchor="nw")
+    fname = f"{file_no} - {fname}"
+    c_t1 = canvas.create_text(screenWidth / 2, 15, text=fname, justify="left", fill="black", font="Courier 18 bold")
+    c_t2 = canvas.create_text(screenWidth / 2 + 2, 17, text=fname, justify="left", fill="lime", font="Courier 18")
+    for i in range(50):
+        root.update()
+        if terminate:
+            exit()
+        sleep(0.1)
+    canvas.delete(c_t1, c_t2, c_i)
 
 def end_loop(code):
+    global terminate
     print(f"Ending pfnss {code}")
+    terminate = True
     root.destroy()
 
 root.bind_all('<Key>', end_loop)
 root.bind_all('<Motion>', end_loop)
-root.mainloop()
+
+while True:
+    file_ids = [i for i in range(1,67)]
+    shuffle(file_ids)
+    for file_no in file_ids:
+        with sqlite3.connect(f"{home}/work/git/pfnss/pfnss.db") as db:
+            fname = db.execute("select name from files where id = ?", (file_no,)).fetchone()[0]
+            display(f"{home}/{fname}", file_no)
