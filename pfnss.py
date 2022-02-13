@@ -98,7 +98,8 @@ while True:
             db.execute("insert into log (ts, file_id) values (?,?)", (ts, file_no))
             db.commit()
             try:
-                requests.post(log_url, data={"ts": ts, "file_no": file_no, "name": fname})
+                requests.post(log_url, headers={"Content-Type": "application/json"},
+                              data={"ts": ts, "file_no": file_no, "name": fname})
             except:
                 pass
             try:
