@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 import os
 from random import shuffle, seed
 import sqlite3
@@ -98,8 +99,8 @@ while True:
             db.execute("insert into log (ts, file_id) values (?,?)", (ts, file_no))
             db.commit()
             try:
-                requests.post(log_url, headers={"Content-Type": "application/json"},
-                              data={"ts": ts, "file_no": file_no, "name": fname})
+                o = json.dumps({"ts": ts, "file_no": file_no, "name": fname})
+                requests.post(log_url, headers={"Content-Type": "application/json"}, data=o)
             except:
                 pass
             try:
