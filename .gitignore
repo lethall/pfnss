@@ -13,3 +13,5 @@ pfnss.scr
 pfnss_wrapper.log
 ss.log
 .idea/
+*.db
+/.python-version
