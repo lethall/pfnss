@@ -92,6 +92,8 @@ while True:
             scan_to_start = False
         with sqlite3.connect(f"{home}/work/git/pfnss/pfnss.db") as db:
             fname = db.execute("select name from files where id = ?", (file_no,)).fetchone()[0]
+            if (".jpg" not in fname) and (".jpeg" not in fname):
+                continue
             ts = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
             db.execute("insert into log (ts, file_id) values (?,?)", (ts, file_no))
             db.commit()
@@ -99,4 +101,7 @@ while True:
                 requests.post(log_url, data={"ts": ts, "file_no": file_no, "name": fname})
             except:
                 pass
-            display(f"{fname}", file_no)
+            try:
+                display(f"{fname}", file_no)
+            except Exception as ex:
+                print(ex)
