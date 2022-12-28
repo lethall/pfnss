@@ -5,7 +5,7 @@ from random import shuffle, seed
 import sqlite3
 import sys
 import time
-from tkinter import *
+from tkinter import Canvas, Tk
 from tkinter import ttk
 
 from PIL import Image, ImageTk
@@ -20,7 +20,7 @@ log_url = "http://192.168.1.189:8800/pfnss"
 switch_secs = 20
 
 hide = win32gui.GetForegroundWindow()
-win32gui.ShowWindow(hide , win32con.SW_HIDE)
+win32gui.ShowWindow(hide, win32con.SW_HIDE)
 
 root = Tk()
 root.attributes("-fullscreen", True)
@@ -32,8 +32,8 @@ screenHeight = canvas.winfo_screenheight()
 screenRatio = screenWidth / screenHeight
 terminate = False
 
-#home = os.getenv('HOME')
-#with open("c:/work/git/pfnss/ss.log", "a") as f:
+# home = os.getenv('HOME')
+# with open("c:/work/git/pfnss/ss.log", "a") as f:
 home = "c:"
 with open(f"{home}/work/git/pfnss/ss.log", "a") as f:
     print(f"got these args: {' '.join(sys.argv[1:])}", file=f)
@@ -46,6 +46,7 @@ try:
         print(f"{last_seen} was seen at {last_ts}")
 except Exception as ex:
     print(f"No log check: {ex}")
+
 
 def display(fname, file_no):
     global terminate
@@ -74,36 +75,39 @@ def display(fname, file_no):
         time.sleep(0.1)
     canvas.delete(c_t1, c_t2, c_i)
 
+
 def end_loop(code):
     global terminate
     print(f"Ending pfnss {code}")
     terminate = True
     root.destroy()
 
-root.bind_all('<Key>', end_loop)
-root.bind_all('<Motion>', end_loop)
 
-while True:
-    scan_to_start = True
-    for file_no in file_ids:
-        if scan_to_start and file_no != last_seen:
-            continue
-        if scan_to_start:
-            print(f"Starting with {file_no}")
-            scan_to_start = False
-        with sqlite3.connect(f"{home}/work/git/pfnss/pfnss.db") as db:
-            fname = db.execute("select name from files where id = ?", (file_no,)).fetchone()[0]
-            if (".jpg" not in fname) and (".jpeg" not in fname):
+if __name__ == '__main__':
+    root.bind_all('<Key>', end_loop)
+    root.bind_all('<Motion>', end_loop)
+
+    while True:
+        scan_to_start = True
+        for file_no in file_ids:
+            if scan_to_start and file_no != last_seen:
                 continue
-            ts = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
-            db.execute("insert into log (ts, file_id) values (?,?)", (ts, file_no))
-            db.commit()
-            try:
-                o = json.dumps({"ts": ts, "file_no": file_no, "name": fname})
-                requests.post(log_url, headers={"Content-Type": "application/json"}, data=o)
-            except:
-                pass
-            try:
-                display(f"{fname}", file_no)
-            except Exception as ex:
-                print(ex)
+            if scan_to_start:
+                print(f"Starting with {file_no}")
+                scan_to_start = False
+            with sqlite3.connect(f"{home}/work/git/pfnss/pfnss.db") as db:
+                fname = db.execute("select name from files where id = ?", (file_no,)).fetchone()[0]
+                if (".jpg" not in fname) and (".jpeg" not in fname):
+                    continue
+                ts = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
+                db.execute("insert into log (ts, file_id) values (?,?)", (ts, file_no))
+                db.commit()
+                try:
+                    o = json.dumps({"ts": ts, "file_no": file_no, "name": fname})
+                    requests.post(log_url, headers={"Content-Type": "application/json"}, data=o)
+                except:
+                    pass
+                try:
+                    display(f"{fname}", file_no)
+                except Exception as ex:
+                    print(ex)
