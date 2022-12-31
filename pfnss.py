@@ -6,7 +6,7 @@ from random import shuffle, seed
 import sqlite3
 import sys
 import time
-from tkinter import Canvas, Tk
+from tkinter import Canvas, Tk, Event
 from tkinter import ttk
 
 from PIL import Image, ImageTk
@@ -22,6 +22,7 @@ class PictureFileNameSaver:
     file_ids = None
     last_seen = None
     log_url = None
+    max_skip_count = None
     switch_secs = None
     do_hide = None
     terminate = False
@@ -39,6 +40,7 @@ class PictureFileNameSaver:
         self.file_ids = [i for i in range(1, int(config["data"].get("maxFileId", "10")))]
         seed(int(config["server"].get("seed", "31056")))
         self.log_url = config["server"].get("logUrl", "http://192.168.1.189:8800/pfnss")
+        self.max_skip_count = int(config["server"].get("maxSkipCount", "5"))
         self.switch_secs = int(config["saver"].get("switchSeconds", "30"))
         self.do_hide = True if config["saver"].get("doHide", "True") == "True" else False
 
@@ -52,10 +54,10 @@ class PictureFileNameSaver:
             print(f"No log check: {ex}")
 
         self.root = Tk()
-        self.root.bind_all('<Key>', self.end_loop)
-        self.root.bind_all('<Motion>', self.end_loop)
+        self.root.bind_all('<Key>', self.keyboard_event)
+        self.root.bind_all('<Motion>', self.motion_event)
         self.root.attributes("-fullscreen", True)
-        self.canvas = canvas = Canvas(self.root, bg="black", borderwidth=0, relief="flat")
+        self.canvas = canvas = Canvas(self.root, bg="black", highlightthickness=0)
         canvas.pack(expand=1, fill="both")
         self.screen_width = canvas.winfo_screenwidth()
         self.screen_height = canvas.winfo_screenheight()
@@ -92,10 +94,16 @@ class PictureFileNameSaver:
             time.sleep(0.1)
         canvas.delete(c_t1, c_t2, c_i)
 
-    def end_loop(self, code):
-        print(f"Ending pfnss {code}")
+    def end_loop(self, ev):
+        print(f"Ending pfnss {ev.type}")
         self.terminate = True
         self.root.destroy()
+
+    def keyboard_event(self, ev):
+        print(f"key: '{ev.keycode} {ev.char}'")
+
+    def motion_event(self, ev):
+        self.end_loop(ev)
 
 print(f"got these args: {' '.join(sys.argv[1:])}")
 
@@ -106,8 +114,9 @@ if __name__ == '__main__':
         hide = win32gui.GetForegroundWindow()
         win32gui.ShowWindow(hide, win32con.SW_HIDE)
 
+    scan_to_start = True
+    skip_count = 0
     while True:
-        scan_to_start = True
         for file_no in app.file_ids:
             if scan_to_start and file_no != app.last_seen:
                 continue
@@ -121,11 +130,15 @@ if __name__ == '__main__':
                 ts = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
                 db.execute("insert into log (ts, file_id) values (?,?)", (ts, file_no))
                 db.commit()
-                try:
-                    o = json.dumps({"ts": ts, "file_no": file_no, "name": fname})
-                    requests.post(app.log_url, headers={"Content-Type": "application/json"}, data=o)
-                except:
-                    pass
+                if skip_count < app.max_skip_count:
+                    try:
+                        o = json.dumps({"ts": ts, "file_no": file_no, "name": fname})
+                        requests.post(app.log_url, headers={"Content-Type": "application/json"}, data=o)
+                        print("reset skip count")
+                        skip_count = 0
+                    except Exception as e:
+                        print(f"{skip_count} < {app.max_skip_count} - {e}")
+                        skip_count += 1
                 try:
                     app.display(f"{fname}", file_no)
                 except Exception as ex:
