@@ -101,6 +101,7 @@ class PictureFileNameSaver:
 
     def keyboard_event(self, ev):
         print(f"key: '{ev.keycode} {ev.char}'")
+	# quit, save, delete, back, forward, resume, pause, edit, mail
 
     def motion_event(self, ev):
         self.end_loop(ev)
