@@ -22,6 +22,7 @@ class PictureFileNameSaver:
     file_ids = None
     last_seen = None
     current_id = None
+    current_idx = None
     paused = False
 
     log_url = None
@@ -66,8 +67,11 @@ class PictureFileNameSaver:
         self.screen_height = canvas.winfo_screenheight()
         self.screen_ratio = self.screen_width / self.screen_height
 
-    def display(self, fname, file_no):
-        global terminate
+    def get_file_id(self):
+        self.current_id = self.file_ids[self.current_idx]
+        return self.current_id
+
+    def display(self, fname):
         jpg = Image.open(fname)
         w, h = jpg.size
         img_ratio = w / h
@@ -88,8 +92,8 @@ class PictureFileNameSaver:
         half_width = screen_width / 2
         c_t1 = canvas.create_text(half_width, 15, text=fname, justify="left", fill="black", font="Courier 12")
         c_t2 = canvas.create_text(half_width + 2, 17, text=fname, justify="left", fill="lime", font="Courier 12")
-        c_t3 = canvas.create_text(half_width, 35, text=str(file_no), justify="left", fill="black", font="Courier 12")
-        c_t4 = canvas.create_text(half_width + 2, 37, text=str(file_no), justify="left", fill="lime", font="Courier 12")
+        c_t3 = canvas.create_text(half_width, 35, text=f"{self.current_id} [{self.current_idx}]", justify="left", fill="black", font="Courier 12")
+        c_t4 = canvas.create_text(half_width + 2, 37, text=f"{self.current_id} [{self.current_idx}]", justify="left", fill="lime", font="Courier 12")
         c_paused = None
         loop = True
         while loop:
@@ -98,6 +102,10 @@ class PictureFileNameSaver:
                 if self.terminate:
                     exit()
                 time.sleep(0.1)
+                if self.current_id != self.file_ids[self.current_idx]:
+                    print(f"{self.current_id} != {self.file_ids[self.current_idx]}")
+                    loop = False
+                    break
             if not self.paused:
                 loop = False
                 if c_paused:
@@ -160,6 +168,21 @@ class PictureFileNameSaver:
     def motion_event(self, ev):
         self.end_loop(ev)
 
+    def previous(self):
+        if self.current_idx > 0:
+            self.current_idx -= 1
+        else:
+            self.current_idx = len(self.file_ids) - 1
+        print(f"reversed to {self.get_file_id()} [{self.current_idx}]")
+
+    def next(self):
+        if self.current_idx < (len(self.file_ids) - 1):
+            self.current_idx += 1
+        else:
+            self.current_idx = 0
+        print(f"advanced to {self.get_file_id()} [{self.current_idx}]")
+
+
 print(f"got these args: {' '.join(sys.argv[1:])}")
 
 
@@ -172,23 +195,32 @@ if __name__ == '__main__':
     scan_to_start = True
     skip_count = 0
     while True:
-        for file_no in app.file_ids:
-            if scan_to_start and file_no != app.last_seen:
-                continue
+        app.current_idx = 0
+        file_count = len(app.file_ids)
+        while app.current_idx < file_count:
             if scan_to_start:
-                print(f"Starting with {file_no}")
+                last_seen = app.last_seen
+                idx = 0
+                for file_no in app.file_ids:
+                    if file_no == last_seen:
+                        break
+                    idx += 1
+                    continue
+                print(f"Starting with {file_no} [{idx}]")
                 scan_to_start = False
-            app.current_id = file_no
+                app.current_idx = idx
+            current_id = app.get_file_id()
             with sqlite3.connect(app.db_file_name) as db:
-                fname = db.execute("select name from files where id = ?", (file_no,)).fetchone()[0]
+                fname = db.execute("select name from files where id = ?", (current_id,)).fetchone()[0]
                 if (".jpg" not in fname) and (".jpeg" not in fname):
+                    app.next()
                     continue
                 ts = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
-                db.execute("insert into log (ts, file_id) values (?,?)", (ts, file_no))
+                db.execute("insert into log (ts, file_id) values (?,?)", (ts, current_id))
                 db.commit()
                 if skip_count < app.max_skip_count:
                     try:
-                        o = json.dumps({"ts": ts, "file_no": file_no, "name": fname})
+                        o = json.dumps({"ts": ts, "file_no": current_id, "name": fname})
                         requests.post(app.log_url, headers={"Content-Type": "application/json"}, data=o)
                         print("reset skip count")
                         skip_count = 0
@@ -196,6 +228,7 @@ if __name__ == '__main__':
                         print(f"{skip_count} < {app.max_skip_count} - {e}")
                         skip_count += 1
                 try:
-                    app.display(f"{fname}", file_no)
+                    app.display(f"{fname}")
                 except Exception as ex:
                     print(ex)
+            app.current_idx += 1
