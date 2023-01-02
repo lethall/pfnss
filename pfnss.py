@@ -21,6 +21,9 @@ class PictureFileNameSaver:
     db_file_name = None
     file_ids = None
     last_seen = None
+    current_id = None
+    paused = False
+
     log_url = None
     max_skip_count = None
     switch_secs = None
@@ -87,12 +90,25 @@ class PictureFileNameSaver:
         c_t2 = canvas.create_text(half_width + 2, 17, text=fname, justify="left", fill="lime", font="Courier 12")
         c_t3 = canvas.create_text(half_width, 35, text=str(file_no), justify="left", fill="black", font="Courier 12")
         c_t4 = canvas.create_text(half_width + 2, 37, text=str(file_no), justify="left", fill="lime", font="Courier 12")
-        for i in range(self.switch_secs * 10):
-            self.root.update()
-            if self.terminate:
-                exit()
-            time.sleep(0.1)
-        canvas.delete(c_t1, c_t2, c_i)
+        c_paused = None
+        loop = True
+        while loop:
+            for i in range(self.switch_secs * 10):
+                self.root.update()
+                if self.terminate:
+                    exit()
+                time.sleep(0.1)
+            if not self.paused:
+                loop = False
+                if c_paused:
+                    print(f"clearing pause {c_paused}")
+                    canvas.itemconfigure(c_paused, state="hidden")
+                    canvas.delete(c_paused)
+                    c_paused = None
+            else:
+                if not c_paused:
+                    c_paused = canvas.create_text(0, 0, text="PAUSED", anchor="nw", fill="red", font="Courier 12")
+        canvas.delete(c_t1, c_t2, c_t3, c_t4, c_i)
 
     def end_loop(self, ev):
         print(f"Ending pfnss {ev.type}")
@@ -100,8 +116,46 @@ class PictureFileNameSaver:
         self.root.destroy()
 
     def keyboard_event(self, ev):
-        print(f"key: '{ev.keycode} {ev.char}'")
-	# quit, save, delete, back, forward, resume, pause, edit, mail
+        if ev.keycode in [37, 38] or ev.char == 'p':
+            self.previous()
+        elif ev.keycode in [39, 40] or ev.char == 'n':
+            self.next()
+        elif ev.keycode == 27 or ev.char == 'q':
+            self.end_loop(ev)
+        elif ev.char == 's':
+            self.save()
+        elif ev.char == 'd':
+            self.delete()
+        elif ev.char == ' ':
+            self.pause()
+        elif ev.keycode == 13:
+            self.resume()
+        elif ev.char == 'e':
+            self.edit()
+        elif ev.char == 'm':
+            self.mail()
+        else:
+            print(f"keycode: {ev.keycode} char: '{ev.char}'")
+
+    def save(self):
+        print(f"save {self.current_id}")
+
+    def delete(self):
+        print(f"delete {self.current_id}")
+
+    def pause(self):
+        print(f"pause {self.current_id}")
+        self.paused = True
+
+    def resume(self):
+        print(f"resume {self.current_id}")
+        self.paused = False
+
+    def edit(self):
+        print(f"edit {self.current_id}")
+
+    def mail(self):
+        print(f"mail {self.current_id}")
 
     def motion_event(self, ev):
         self.end_loop(ev)
@@ -124,6 +178,7 @@ if __name__ == '__main__':
             if scan_to_start:
                 print(f"Starting with {file_no}")
                 scan_to_start = False
+            app.current_id = file_no
             with sqlite3.connect(app.db_file_name) as db:
                 fname = db.execute("select name from files where id = ?", (file_no,)).fetchone()[0]
                 if (".jpg" not in fname) and (".jpeg" not in fname):
