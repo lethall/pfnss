@@ -24,6 +24,8 @@ class PictureFileNameSaver:
     current_id = None
     current_idx = None
     paused = False
+    looping = False
+    display_timer = None
 
     log_url = None
     max_skip_count = None
@@ -96,15 +98,25 @@ class PictureFileNameSaver:
         c_t4 = canvas.create_text(half_width + 2, 37, text=f"{self.current_id} [{self.current_idx}]", justify="left", fill="lime", font="Courier 12")
         c_paused = None
         loop = True
+        showing_id = self.current_id
         while loop:
             for i in range(self.switch_secs * 10):
                 self.root.update()
                 if self.terminate:
                     exit()
+                # self.looping = True
+                # if self.display_timer:
+                #     self.root.after_cancel(self.display_timer)
+                # self.display_timer = self.root.after(100, self.end_looping)
+                # while self.looping:
+                #     if showing_id != self.get_file_id():
+                #         self.looping = loop = False
+                #         break
                 time.sleep(0.1)
-                if self.current_id != self.file_ids[self.current_idx]:
-                    print(f"{self.current_id} != {self.file_ids[self.current_idx]}")
+                if showing_id != self.get_file_id():
                     loop = False
+                    break
+                if (self.paused and not c_paused) or (c_paused and not self.paused):
                     break
             if not self.paused:
                 loop = False
@@ -117,6 +129,12 @@ class PictureFileNameSaver:
                 if not c_paused:
                     c_paused = canvas.create_text(0, 0, text="PAUSED", anchor="nw", fill="red", font="Courier 12")
         canvas.delete(c_t1, c_t2, c_t3, c_t4, c_i)
+
+    def end_looping(self):
+        self.looping = False
+        # if self.display_timer:
+        #     self.root.after_cancel(self.display_timer)
+        #     self.display_timer = None
 
     def end_loop(self, ev):
         print(f"Ending pfnss {ev.type}")
@@ -145,11 +163,14 @@ class PictureFileNameSaver:
         else:
             print(f"keycode: {ev.keycode} char: '{ev.char}'")
 
-    def save(self):
-        print(f"save {self.current_id}")
+    def save(self, mark="save"):
+        with sqlite3.connect(self.db_file_name) as db:
+            ts = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
+            db.execute("insert into marks (ts, file_id, mark) values (?,?,?)", (ts, self.current_id, mark))
+            db.commit()
 
     def delete(self):
-        print(f"delete {self.current_id}")
+        self.save("delete")
 
     def pause(self):
         print(f"pause {self.current_id}")
@@ -218,17 +239,17 @@ if __name__ == '__main__':
                 ts = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
                 db.execute("insert into log (ts, file_id) values (?,?)", (ts, current_id))
                 db.commit()
-                if skip_count < app.max_skip_count:
-                    try:
-                        o = json.dumps({"ts": ts, "file_no": current_id, "name": fname})
-                        requests.post(app.log_url, headers={"Content-Type": "application/json"}, data=o)
-                        print("reset skip count")
-                        skip_count = 0
-                    except Exception as e:
-                        print(f"{skip_count} < {app.max_skip_count} - {e}")
-                        skip_count += 1
+            if skip_count < app.max_skip_count:
                 try:
-                    app.display(f"{fname}")
-                except Exception as ex:
-                    print(ex)
+                    o = json.dumps({"ts": ts, "file_no": current_id, "name": fname})
+                    requests.post(app.log_url, headers={"Content-Type": "application/json"}, data=o)
+                    print("reset skip count")
+                    skip_count = 0
+                except Exception as e:
+                    print(f"{skip_count} < {app.max_skip_count} - {e}")
+                    skip_count += 1
+            try:
+                app.display(f"{fname}")
+            except Exception as ex:
+                print(ex)
             app.current_idx += 1
