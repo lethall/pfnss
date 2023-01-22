@@ -12,9 +12,12 @@ from tkinter import ttk
 from PIL import Image, ImageTk
 import requests
 
-# pip install pywin32 -> This will install the libs that are required
-import win32gui, win32con
-
+win32gui = None
+try:
+    # pip install pywin32 -> This will install the libs that are required
+    import win32gui, win32con
+except:
+    print("No win32 support")
 
 class PictureFileNameSaver:
     config = None
@@ -93,9 +96,9 @@ class PictureFileNameSaver:
         # fname = f"{file_no} - {fname}"
         half_width = screen_width / 2
         c_t1 = canvas.create_text(half_width, 15, text=fname, justify="left", fill="black", font="Courier 12")
-        c_t2 = canvas.create_text(half_width + 2, 17, text=fname, justify="left", fill="lime", font="Courier 12")
+        c_t2 = canvas.create_text(half_width + 2, 17, text=fname, justify="left", fill="green", font="Courier 12")
         c_t3 = canvas.create_text(half_width, 35, text=f"{self.current_id} [{self.current_idx}]", justify="left", fill="black", font="Courier 12")
-        c_t4 = canvas.create_text(half_width + 2, 37, text=f"{self.current_id} [{self.current_idx}]", justify="left", fill="lime", font="Courier 12")
+        c_t4 = canvas.create_text(half_width + 2, 37, text=f"{self.current_id} [{self.current_idx}]", justify="left", fill="green", font="Courier 12")
         c_paused = None
         loop = True
         showing_id = self.current_id
@@ -209,7 +212,7 @@ print(f"got these args: {' '.join(sys.argv[1:])}")
 
 if __name__ == '__main__':
     app = PictureFileNameSaver()
-    if app.do_hide:
+    if win32gui and app.do_hide:
         hide = win32gui.GetForegroundWindow()
         win32gui.ShowWindow(hide, win32con.SW_HIDE)
 

@@ -8,3 +8,5 @@ ss.log
 *.db
 *.exe
 /.python-version
+go.sum
+Pictures/
