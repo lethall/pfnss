@@ -28,6 +28,7 @@ class PictureFileNameSaver:
     current_idx = None
     paused = False
     looping = False
+    reverse = False
     display_timer = None
 
     log_url = None
@@ -107,14 +108,6 @@ class PictureFileNameSaver:
                 self.root.update()
                 if self.terminate:
                     exit()
-                # self.looping = True
-                # if self.display_timer:
-                #     self.root.after_cancel(self.display_timer)
-                # self.display_timer = self.root.after(100, self.end_looping)
-                # while self.looping:
-                #     if showing_id != self.get_file_id():
-                #         self.looping = loop = False
-                #         break
                 time.sleep(0.1)
                 if showing_id != self.get_file_id():
                     loop = False
@@ -135,9 +128,6 @@ class PictureFileNameSaver:
 
     def end_looping(self):
         self.looping = False
-        # if self.display_timer:
-        #     self.root.after_cancel(self.display_timer)
-        #     self.display_timer = None
 
     def end_loop(self, ev):
         print(f"Ending pfnss {ev.type}")
@@ -155,9 +145,7 @@ class PictureFileNameSaver:
             self.save()
         elif ev.char == 'd':
             self.delete()
-        elif ev.char == ' ':
-            self.pause()
-        elif ev.keycode == 13:
+        elif ev.char == ' ' or ev.keycode == 13:
             self.resume()
         elif ev.char == 'e':
             self.edit()
@@ -175,13 +163,14 @@ class PictureFileNameSaver:
     def delete(self):
         self.save("delete")
 
-    def pause(self):
-        print(f"pause {self.current_id}")
-        self.paused = True
-
     def resume(self):
-        print(f"resume {self.current_id}")
-        self.paused = False
+        if self.paused:
+            print(f"resume {self.current_id}")
+            self.paused = False
+        else:
+            print(f"pause {self.current_id}")
+            self.paused = True
+
 
     def edit(self):
         print(f"edit {self.current_id}")
@@ -193,6 +182,7 @@ class PictureFileNameSaver:
         self.end_loop(ev)
 
     def previous(self):
+        self.reverse = True
         if self.current_idx > 0:
             self.current_idx -= 1
         else:
@@ -255,4 +245,7 @@ if __name__ == '__main__':
                 app.display(f"{fname}")
             except Exception as ex:
                 print(ex)
-            app.current_idx += 1
+            if app.reverse:
+                app.reverse = False
+            else:
+                app.current_idx += 1
