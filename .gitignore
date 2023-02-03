@@ -10,3 +10,6 @@ ss.log
 /.python-version
 go.sum
 Pictures/
+*.local
+*.code-workspace
+.vscode/
