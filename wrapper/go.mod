@@ -1,4 +1,4 @@
-module javafoundry.com/pfnss
+module javafoundry.com/pfnss-wrapper
 
 go 1.19
 

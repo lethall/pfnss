@@ -13,3 +13,5 @@ Pictures/
 *.local
 *.code-workspace
 .vscode/
+**/.DS_Store
+.python-version
