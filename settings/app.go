@@ -2,10 +2,8 @@ package main
 
 import (
 	"context"
-	"image"
 	_ "image/jpeg"
 	"io/ioutil"
-	"os"
 	"strings"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -14,13 +12,6 @@ import (
 // App struct
 type App struct {
 	ctx context.Context
-}
-
-type ImageInfo struct {
-	FileName string `json:"fileName"`
-	Width    int    `json:"w"`
-	Height   int    `json:"h"`
-	Favor    string `json:"favor"`
 }
 
 var fileName []string
@@ -42,28 +33,7 @@ func (a *App) startup(ctx context.Context) {
 	fileName = strings.Split(string(fileNames), "\n")
 }
 
-func (a *App) LoadImage(imageIndex int) (imageInfo ImageInfo) {
+func (a *App) LoadImage(imageIndex int) string {
 	imageIndex = imageIndex % len(fileName)
-	imageInfo.FileName = fileName[imageIndex]
-	runtime.LogDebug(a.ctx, imageInfo.FileName)
-	file, err := os.Open(imageInfo.FileName)
-	if err != nil {
-		runtime.LogWarningf(a.ctx, "Failed to load image [%d] %s", imageIndex, imageInfo.FileName)
-		return
-	}
-	defer file.Close()
-	config, _, _ := image.DecodeConfig(file)
-	imageInfo.Width = config.Width
-	imageInfo.Height = config.Height
-	screenW, screenH := runtime.WindowGetSize(a.ctx)
-	imageRatio := float32(config.Width) / float32(config.Height)
-	screenRatio := float32(screenW) / float32(screenH)
-	if imageRatio > screenRatio {
-		imageInfo.Favor = "width"
-	} else {
-		imageInfo.Favor = "height"
-	}
-	runtime.LogInfof(a.ctx, "screen: %dx%d %v image: %v favor: %s",
-		screenW, screenH, screenRatio, imageRatio, imageInfo.Favor)
-	return
+	return fileName[imageIndex]
 }

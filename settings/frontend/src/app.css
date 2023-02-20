@@ -1,16 +1,6 @@
-#logo {
-    display: block;
-    height: 100%;
-    margin: auto;
-    /* padding: 10% 0 0; */
-    background-position: center;
+#app {
     background-repeat: no-repeat;
-    background-size: 100% 100%;
-    background-origin: content-box;
-}
-
-.center {
-    display: block;
+    background-size: contain;
+    background-position: center;
     margin: auto;
-    height: 90%;
 }
