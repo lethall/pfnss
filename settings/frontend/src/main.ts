@@ -6,10 +6,10 @@ import {LoadImage} from '../wailsjs/go/main/App';
 window.loadImage = function () {
     try {
         LoadImage(seq)
-            .then((fileName) => {
+            .then((fileItem) => {
                 const app = document.getElementById('app') as HTMLDivElement;
-                app.innerText = fileName;
-                app.setAttribute("style", "background-image: url('" + fileName + "')");
+                app.innerText = fileItem.name;
+                app.setAttribute("style", "background-image: url('/Users/leehall/work/git/pfnss/" + fileItem.name + "')");
                 seq++
             })
             .catch((err) => {

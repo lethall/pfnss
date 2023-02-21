@@ -2,11 +2,11 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	_ "image/jpeg"
-	"io/ioutil"
-	"strings"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+	_ "modernc.org/sqlite"
 )
 
 // App struct
@@ -14,7 +14,12 @@ type App struct {
 	ctx context.Context
 }
 
-var fileName []string
+type FileItem struct {
+	Id   int    `json:"id"`
+	Name string `json:"name"`
+}
+
+var files []FileItem
 
 // NewApp creates a new App application struct
 func NewApp() *App {
@@ -25,15 +30,40 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
-	fileNames, err := ioutil.ReadFile("files.txt")
+	db, err := sql.Open("sqlite", "pfnss.db")
 	if err != nil {
-		runtime.LogFatal(a.ctx, "Failed to read filenames")
+		runtime.LogFatal(a.ctx, "Failed to read DB")
 		return
 	}
-	fileName = strings.Split(string(fileNames), "\n")
+
+	rows, err := db.Query("select id, name from files;")
+	if err != nil {
+		runtime.LogFatal(a.ctx, "Failed to query files")
+		return
+	}
+
+	for rows.Next() {
+		fi := FileItem{}
+		if err = rows.Scan(&fi.Id, &fi.Name); err != nil {
+			runtime.LogFatalf(a.ctx, "Failed to scan fileName %v", err)
+			return
+		}
+
+		files = append(files, fi)
+	}
+
+	if err = rows.Err(); err != nil {
+		runtime.LogFatal(a.ctx, "Could not use result set")
+		return
+	}
+
+	if err = db.Close(); err != nil {
+		runtime.LogFatal(a.ctx, "Could not close DB")
+		return
+	}
 }
 
-func (a *App) LoadImage(imageIndex int) string {
-	imageIndex = imageIndex % len(fileName)
-	return fileName[imageIndex]
+func (a *App) LoadImage(imageIndex int) FileItem {
+	imageIndex = imageIndex % len(files)
+	return files[imageIndex]
 }
