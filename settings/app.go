@@ -20,6 +20,7 @@ type FileItem struct {
 }
 
 var files []FileItem
+var absPrefix string = "/Users/leehall/"
 
 // NewApp creates a new App application struct
 func NewApp() *App {
@@ -64,6 +65,14 @@ func (a *App) startup(ctx context.Context) {
 }
 
 func (a *App) LoadImage(imageIndex int) FileItem {
-	imageIndex = imageIndex % len(files)
-	return files[imageIndex]
+	item := files[imageIndex%len(files)]
+	item.Name = absPrefix + item.Name
+	return item
+}
+
+func (a *App) DoKey(key string) {
+	runtime.LogDebugf(a.ctx, "key: %v\n", key)
+	if key == "q" {
+		runtime.Quit(a.ctx)
+	}
 }
