@@ -28,9 +28,12 @@ window.loadImage = function () {
 };
 
 window.doKey = function (ev: KeyboardEvent) {
-    ev.preventDefault();
+    ev.stopPropagation();
     DoKey(ev.key)
 }
 
+document.addEventListener("keyup", window.doKey);
+
 let seq = 0;
+
 window.loadImage();
