@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"regexp"
 
@@ -25,15 +26,16 @@ func readConfig() (err error) {
 		return fmt.Errorf("failed to read the ini file - %q", e)
 	}
 
-	wrapper, e := ini.Section("wrapper")
+	main, e := ini.Section("")
 	if e != nil {
-		return fmt.Errorf("failed to read the wrapper section - %q", e)
+		return fmt.Errorf("failed to read the main section - %q", e)
 	}
 
-	alternateIniFileName, e := wrapper.Value(ALTERNATE_INIFILENAME_KEY)
+	alternateIniFileName, e := main.Value(ALTERNATE_INIFILENAME_KEY)
 	if e == nil {
 		iniFile, e = os.Open(alternateIniFileName)
 		if e == nil {
+			log.Printf("Using alternate ini file %v\n", alternateIniFileName)
 			ini, e = inifile.NewIniConfigFromFile(iniFile)
 			if e != nil {
 				return fmt.Errorf("failed to read the alternate ini file - %q", e)
