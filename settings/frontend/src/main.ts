@@ -14,9 +14,14 @@ window.loadImage = function () {
     try {
         LoadImage(seq)
             .then((fileItem) => {
-                const app = document.getElementById('app') as HTMLDivElement;
-                app.innerText = fileItem.name;
-                app.setAttribute("style", "background-image: url('" + fileItem.name + "')");
+                const spans = (document.getElementById('photo-name') as HTMLDivElement).children;
+                let id = spans?.item(0);
+                if (id) id.innerHTML = `${fileItem.id}`;
+                id = spans?.item(1);
+                if (id) id.innerHTML = `${fileItem.name}`;
+                id = spans?.item(2);
+                if (id) id.innerHTML = `${seq}`;
+                (document.getElementById('app') as HTMLDivElement).setAttribute("style", "background-image: url('" + fileItem.name + "')");
                 seq++
             })
             .catch((err) => {

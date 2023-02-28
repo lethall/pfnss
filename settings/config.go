@@ -14,6 +14,7 @@ const ALTERNATE_INIFILENAME_KEY = "iniFileName"
 const ABSOLUTE_PATH_PREFIX_KEY = "absolutePathPrefix"
 const CONDITIONER_REGEXP_KEY = "conditionerRegexp"
 const CONDITIONER_REPLACEMENT_KEY = "conditionerReplacement"
+const SHUFFLE_SEED_KEY = "shuffleSeed"
 
 func readConfig() (err error) {
 	iniFile, e := os.Open("pfnss.ini")
@@ -61,6 +62,11 @@ func readConfig() (err error) {
 	}
 
 	replacement, _ = saver.Value(CONDITIONER_REPLACEMENT_KEY)
+
+	shuffleSeed, e = saver.ValueAsInt64(SHUFFLE_SEED_KEY)
+	if e != nil {
+		shuffleSeed = 1234
+	}
 
 	return nil
 }

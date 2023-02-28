@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	_ "image/jpeg"
 	"log"
+	"math/rand"
 	"regexp"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -25,6 +26,7 @@ var files []FileItem
 var absPrefix string
 var conditioner regexp.Regexp
 var replacement string = ""
+var shuffleSeed int64
 
 // NewApp creates a new App application struct
 func NewApp() *App {
@@ -68,6 +70,11 @@ func (a *App) startup(ctx context.Context) {
 	if err = rows.Err(); err != nil {
 		log.Fatalf("Could not use result set")
 	}
+	rand.Seed(shuffleSeed)
+	log.Println("shuffle seed: ", shuffleSeed)
+	rand.Shuffle(len(files), func(i int, j int) {
+		files[i], files[j] = files[j], files[i]
+	})
 }
 
 func conditionFileName(ctx context.Context, item FileItem) FileItem {
