@@ -72,6 +72,7 @@ func (a *App) startup(ctx context.Context) {
 	if err = rows.Err(); err != nil {
 		log.Fatalf("Could not use result set")
 	}
+
 	rand.Seed(shuffleSeed)
 	log.Println("shuffle seed: ", shuffleSeed)
 	rand.Shuffle(len(files), func(i int, j int) {
@@ -90,6 +91,50 @@ func (a *App) startup(ctx context.Context) {
 	}()
 }
 
+func mark(indx int64, action string) {
+	fileId := files[indx].Id
+	db, err := sql.Open("sqlite", "pfnss.db")
+	if err != nil {
+		log.Fatalf("Failed to read DB")
+	}
+
+	defer func() {
+		err = db.Close()
+		if err != nil {
+			log.Fatalf("Could not close DB")
+		}
+	}()
+
+	_, err = db.Exec("insert into marks (ts, file_id, mark) values (?,?,?)",
+		time.Now().Format("2006-01-02T15:04:05.999"), fileId, action)
+	if err != nil {
+		log.Fatalf("Failed to insert mark %s for %d", action, fileId)
+	}
+
+}
+
+func logView(indx int64) {
+	fileId := files[indx].Id
+	db, err := sql.Open("sqlite", "pfnss.db")
+	if err != nil {
+		log.Fatalf("Failed to read DB")
+	}
+
+	defer func() {
+		err = db.Close()
+		if err != nil {
+			log.Fatalf("Could not close DB")
+		}
+	}()
+
+	_, err = db.Exec("insert into log (ts, file_id) values (?,?)",
+		time.Now().Format("2006-01-02T15:04:05.999"), fileId)
+	if err != nil {
+		log.Fatalf("Failed to insert log for %d", fileId)
+	}
+
+}
+
 func conditionFileName(ctx context.Context, item FileItem) FileItem {
 	newItem := FileItem{
 		Id: item.Id,
@@ -101,6 +146,7 @@ func conditionFileName(ctx context.Context, item FileItem) FileItem {
 	}
 	runtime.LogDebugf(ctx, "AbsPrefix: %s FileName: %s", absPrefix, s)
 	newItem.Name = absPrefix + s
+
 	return newItem
 }
 
@@ -115,6 +161,7 @@ func (a *App) LoadImage(imageIndex int) FileItem {
 		imageIndex = 0
 	}
 	currentIndex = int64(imageIndex)
+	logView(currentIndex)
 	return conditionFileName(a.ctx, files[imageIndex])
 }
 
@@ -135,6 +182,8 @@ func (a *App) DoKey(key string) {
 	case "p", "ArrowLeft", "ArrowUp":
 		currentIndex--
 		runtime.EventsEmit(a.ctx, "loadimage", currentIndex)
+	case "s", "d", "e":
+		mark(currentIndex, key)
 	default:
 		runtime.LogDebugf(a.ctx, "Key: %v", key)
 	}
