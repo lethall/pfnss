@@ -2,11 +2,13 @@ import './style.css';
 import './app.css';
 
 import {LoadImage, DoKey} from '../wailsjs/go/main/App';
+import {EventsOn} from '../wailsjs/runtime'
 
 declare global {
     interface Window {
         loadImage: () => void;
         doKey: (ev: KeyboardEvent) => void;
+        getImage: (n: number) => void;
     }
 }
 
@@ -32,12 +34,18 @@ window.loadImage = function () {
     }
 };
 
+window.getImage = function (n: number) {
+    seq = n;
+    window.loadImage();
+}
+
 window.doKey = function (ev: KeyboardEvent) {
-    ev.stopPropagation();
+    ev.preventDefault();
     DoKey(ev.key)
 }
 
 document.addEventListener("keyup", window.doKey);
+EventsOn("loadimage", (d: number) => { window.getImage(d); })
 
 let seq = 0;
 

@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"regexp"
+	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	_ "modernc.org/sqlite"
@@ -27,6 +28,7 @@ var absPrefix string
 var conditioner regexp.Regexp
 var replacement string = ""
 var shuffleSeed int64
+var currentIndex int64
 
 // NewApp creates a new App application struct
 func NewApp() *App {
@@ -75,6 +77,17 @@ func (a *App) startup(ctx context.Context) {
 	rand.Shuffle(len(files), func(i int, j int) {
 		files[i], files[j] = files[j], files[i]
 	})
+
+	imageTicker := time.NewTicker(10 * time.Second)
+	go func() {
+		for {
+			select {
+			case <-imageTicker.C:
+				currentIndex++
+				runtime.EventsEmit(a.ctx, "loadimage", currentIndex)
+			}
+		}
+	}()
 }
 
 func conditionFileName(ctx context.Context, item FileItem) FileItem {
@@ -95,12 +108,34 @@ func (a *App) LoadImage(imageIndex int) FileItem {
 	if len(files) == 0 {
 		return FileItem{}
 	}
+	if imageIndex < 0 {
+		imageIndex = len(files) - 1
+	}
+	if imageIndex >= len(files) {
+		imageIndex = 0
+	}
+	currentIndex = int64(imageIndex)
 	return conditionFileName(a.ctx, files[imageIndex])
 }
 
 func (a *App) DoKey(key string) {
 	runtime.LogDebugf(a.ctx, "key: %v\n", key)
-	if key == "q" {
+	switch key {
+	case "q":
 		runtime.Quit(a.ctx)
+	case "f":
+		if runtime.WindowIsFullscreen(a.ctx) {
+			runtime.WindowUnfullscreen(a.ctx)
+		} else {
+			runtime.WindowFullscreen(a.ctx)
+		}
+	case "n", "ArrowRight", "ArrowDown":
+		currentIndex++
+		runtime.EventsEmit(a.ctx, "loadimage", currentIndex)
+	case "p", "ArrowLeft", "ArrowUp":
+		currentIndex--
+		runtime.EventsEmit(a.ctx, "loadimage", currentIndex)
+	default:
+		runtime.LogDebugf(a.ctx, "Key: %v", key)
 	}
 }
