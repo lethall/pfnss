@@ -21,6 +21,7 @@ type App struct {
 type FileItem struct {
 	Id   int    `json:"id"`
 	Name string `json:"name"`
+	Ix   int    `json:"ix"`
 }
 
 var files []FileItem
@@ -28,7 +29,10 @@ var absPrefix string
 var conditioner regexp.Regexp
 var replacement string = ""
 var shuffleSeed int64
-var currentIndex int64
+var currentIndex int
+var imageTicker *time.Ticker
+var viewDelay time.Duration = 10 * time.Second
+var paused bool
 
 // NewApp creates a new App application struct
 func NewApp() *App {
@@ -79,7 +83,7 @@ func (a *App) startup(ctx context.Context) {
 		files[i], files[j] = files[j], files[i]
 	})
 
-	imageTicker := time.NewTicker(10 * time.Second)
+	imageTicker = time.NewTicker(viewDelay)
 	go func() {
 		for {
 			select {
@@ -91,7 +95,7 @@ func (a *App) startup(ctx context.Context) {
 	}()
 }
 
-func mark(indx int64, action string) {
+func mark(indx int, action string) {
 	fileId := files[indx].Id
 	db, err := sql.Open("sqlite", "pfnss.db")
 	if err != nil {
@@ -113,7 +117,7 @@ func mark(indx int64, action string) {
 
 }
 
-func logView(indx int64) {
+func logView(indx int) {
 	fileId := files[indx].Id
 	db, err := sql.Open("sqlite", "pfnss.db")
 	if err != nil {
@@ -135,9 +139,10 @@ func logView(indx int64) {
 
 }
 
-func conditionFileName(ctx context.Context, item FileItem) FileItem {
+func conditionFileName(ctx context.Context, item FileItem, ix int) FileItem {
 	newItem := FileItem{
 		Id: item.Id,
+		Ix: ix,
 	}
 
 	s := item.Name
@@ -160,15 +165,15 @@ func (a *App) LoadImage(imageIndex int) FileItem {
 	if imageIndex >= len(files) {
 		imageIndex = 0
 	}
-	currentIndex = int64(imageIndex)
+	currentIndex = imageIndex
 	logView(currentIndex)
-	return conditionFileName(a.ctx, files[imageIndex])
+	return conditionFileName(a.ctx, files[imageIndex], currentIndex)
 }
 
 func (a *App) DoKey(key string) {
 	runtime.LogDebugf(a.ctx, "key: %v\n", key)
 	switch key {
-	case "q":
+	case "q", "Escape":
 		runtime.Quit(a.ctx)
 	case "f":
 		if runtime.WindowIsFullscreen(a.ctx) {
@@ -178,12 +183,33 @@ func (a *App) DoKey(key string) {
 		}
 	case "n", "ArrowRight", "ArrowDown":
 		currentIndex++
+		imageTicker.Reset(viewDelay)
 		runtime.EventsEmit(a.ctx, "loadimage", currentIndex)
 	case "p", "ArrowLeft", "ArrowUp":
 		currentIndex--
+		imageTicker.Reset(viewDelay)
 		runtime.EventsEmit(a.ctx, "loadimage", currentIndex)
 	case "s", "d", "e":
 		mark(currentIndex, key)
+		action := ""
+		switch key {
+		case "s":
+			action = "Save"
+		case "d":
+			action = "Delete"
+		case "e":
+			action = "Edit"
+		}
+		runtime.EventsEmit(a.ctx, "announce", action)
+	case " ", "Enter":
+		paused = !paused
+		if paused {
+			imageTicker.Stop()
+			runtime.EventsEmit(a.ctx, "announce", "Paused")
+		} else {
+			imageTicker.Reset(viewDelay)
+			runtime.EventsEmit(a.ctx, "announce", "")
+		}
 	default:
 		runtime.LogDebugf(a.ctx, "Key: %v", key)
 	}
