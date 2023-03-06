@@ -15,6 +15,7 @@ const ABSOLUTE_PATH_PREFIX_KEY = "absolutePathPrefix"
 const CONDITIONER_REGEXP_KEY = "conditionerRegexp"
 const CONDITIONER_REPLACEMENT_KEY = "conditionerReplacement"
 const SHUFFLE_SEED_KEY = "shuffleSeed"
+const DB_FILE_NAME = "dbFileName"
 
 func readConfig() (err error) {
 	iniFile, e := os.Open("pfnss.ini")
@@ -56,8 +57,8 @@ func readConfig() (err error) {
 
 	conditionerSource := ""
 	conditionerSource, _ = saver.Value(CONDITIONER_REGEXP_KEY)
-	c, err := regexp.Compile(conditionerSource)
-	if err == nil {
+	c, e := regexp.Compile(conditionerSource)
+	if e == nil {
 		conditioner = *c
 	}
 
@@ -66,6 +67,15 @@ func readConfig() (err error) {
 	shuffleSeed, e = saver.ValueAsInt64(SHUFFLE_SEED_KEY)
 	if e != nil {
 		shuffleSeed = 1234
+	}
+
+	data, e := ini.Section("data")
+	if e != nil {
+		return fmt.Errorf("failed to read the data section - %q", e)
+	}
+	dbFileName, e = data.Value(DB_FILE_NAME)
+	if e != nil {
+		return fmt.Errorf("failed to read dbFileName - %q", e)
 	}
 
 	return nil

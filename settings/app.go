@@ -33,6 +33,7 @@ var currentIndex int
 var imageTicker *time.Ticker
 var viewDelay time.Duration = 10 * time.Second
 var paused bool
+var dbFileName string
 
 // NewApp creates a new App application struct
 func NewApp() *App {
@@ -47,7 +48,7 @@ func (a *App) startup(ctx context.Context) {
 		log.Fatalf("failed to read ini file %v\n", err)
 	}
 
-	db, err := sql.Open("sqlite", "pfnss.db")
+	db, err := sql.Open("sqlite", dbFileName)
 	if err != nil {
 		log.Fatalf("Failed to read DB")
 	}
@@ -97,7 +98,7 @@ func (a *App) startup(ctx context.Context) {
 
 func mark(indx int, action string) {
 	fileId := files[indx].Id
-	db, err := sql.Open("sqlite", "pfnss.db")
+	db, err := sql.Open("sqlite", dbFileName)
 	if err != nil {
 		log.Fatalf("Failed to read DB")
 	}
@@ -119,7 +120,7 @@ func mark(indx int, action string) {
 
 func logView(indx int) {
 	fileId := files[indx].Id
-	db, err := sql.Open("sqlite", "pfnss.db")
+	db, err := sql.Open("sqlite", dbFileName)
 	if err != nil {
 		log.Fatalf("Failed to read DB")
 	}
