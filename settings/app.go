@@ -25,9 +25,9 @@ type FileItem struct {
 }
 
 var files []FileItem
-var absPrefix string
+var absPrefix = ""
 var conditioner regexp.Regexp
-var replacement string = ""
+var replacement = ""
 var shuffleSeed int64
 var currentIndex int
 var imageTicker *time.Ticker
@@ -62,7 +62,7 @@ func (a *App) startup(ctx context.Context) {
 
 	rows, err := db.Query("select id, name from files;")
 	if err != nil {
-		log.Fatalf("Failed to query files")
+		log.Fatalf("Failed to query files from %v", dbFileName)
 	}
 
 	for rows.Next() {

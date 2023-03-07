@@ -50,11 +50,7 @@ func readConfig() (err error) {
 		return fmt.Errorf("failed to read the saver section - %q", e)
 	}
 
-	absPrefix, e = saver.Value(ABSOLUTE_PATH_PREFIX_KEY)
-	if e != nil {
-		return fmt.Errorf("failed to read the prefix - %q", e)
-	}
-
+	absPrefix, _ = saver.Value(ABSOLUTE_PATH_PREFIX_KEY)
 	conditionerSource := ""
 	conditionerSource, _ = saver.Value(CONDITIONER_REGEXP_KEY)
 	c, e := regexp.Compile(conditionerSource)
