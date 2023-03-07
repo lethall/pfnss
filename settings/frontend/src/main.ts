@@ -1,7 +1,7 @@
 import './style.css';
 import './app.css';
 import './bootstrap.min.css';
-import './bootstrap.min.js';
+import './bootstrap.bundle.min.js';
 
 import {LoadImage, DoKey} from '../wailsjs/go/main/App';
 import {EventsOn} from '../wailsjs/runtime'
@@ -12,6 +12,7 @@ declare global {
         doKey: (ev: KeyboardEvent) => void;
         announce: (s: string) => void;
         getImage: (n: number) => void;
+        configure: () => void;
     }
 }
 
@@ -29,7 +30,7 @@ window.loadImage = function () {
                 if (id) id.innerHTML = `${fileItem.name}`;
                 id = spans?.item(3);
                 if (id) id.innerHTML = `${seq}`;
-                (document.getElementById('app') as HTMLDivElement).setAttribute("style", "background-image: url('" + fileItem.name + "')");
+                (document.getElementById('viewer') as HTMLDivElement).setAttribute("style", "background-image: url('" + fileItem.name + "')");
                 seq++
             })
             .catch((err) => {
@@ -46,6 +47,7 @@ window.getImage = function (n: number) {
 }
 
 window.doKey = function (ev: KeyboardEvent) {
+    if (document.getElementById('viewer')?.classList.contains("d-none")) return;
     ev.preventDefault();
     DoKey(ev.key);
 }
@@ -54,10 +56,16 @@ window.announce = function (s: string) {
     (document.getElementById('announce') as HTMLSpanElement).innerHTML = s;
 }
 
-document.getElementById('app')?.addEventListener("click", window.loadImage);
+window.configure = function () {
+    document.getElementById('viewer')?.classList.add("d-none");
+    document.getElementById('configure')?.classList.remove("d-none");
+}
+
+document.getElementById('viewer')?.addEventListener("click", window.loadImage);
 document.addEventListener("keyup", window.doKey);
 EventsOn("loadimage", (d: number) => { window.getImage(d); })
 EventsOn("announce", (s: string) => { window.announce(s); })
+EventsOn("configure", () => { window.configure(); })
 
 let seq = 0;
 

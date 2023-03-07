@@ -211,6 +211,10 @@ func (a *App) DoKey(key string) {
 			imageTicker.Reset(viewDelay)
 			runtime.EventsEmit(a.ctx, "announce", "")
 		}
+	case "c":
+		imageTicker.Stop()
+		paused = true
+		runtime.EventsEmit(a.ctx, "configure")
 	default:
 		runtime.LogDebugf(a.ctx, "Key: %v", key)
 	}
