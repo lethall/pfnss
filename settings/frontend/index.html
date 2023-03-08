@@ -17,36 +17,43 @@
             <span class="badge bg-secondary"></span>
         </div>
     </div>
-    <div id="configure" class="d-none">
-        <h1 class="text-danger">Form</h1>
+    <div id="configure" class="d-none bg-light">
+        <h1 class="text-success">Patricia's File Screen Saver</h1>
+        <h2 class="text-success">Settings</h2>
         <form>
+            <div class="form-group text-primary">
+                <h3>DB</h3>
+                seed
+                path
+                dirs
+                filename pattern sub
+                update
+                logs
+            </div>
+            <div class="form-group text-primary">
+                <h3>Find</h3>
+                id range
+                seq range
+                time range
+                name
+            </div>
+            <div class="form-group text-primary">
+                <h3>display</h3>
+                speed
+                show name
+                show id
+                show index
+            </div>
+            <div class="form-group text-primary">
+                <h3>curate</h3>
+                execute marks
+                dest path
+                ignore marks
+            </div>
             <button id="cancel">Cancel</button>
             <button id="save">Save</button>
         </form>
     </div>
-    <!--
-    db:
-    seed
-    path
-    dirs
-    filename pattern sub
-    update
-    logs
-    find:
-    id range
-    seq range
-    time range
-    name
-    display:
-    speed
-    show name
-    show id
-    show index
-    curate:
-    execute marks
-    dest path
-    ignore marks
-    -->
     <script src="./src/main.ts" type="module"></script>
 </body>
 
