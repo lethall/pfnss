@@ -9,3 +9,7 @@ export function DoKey(arg1) {
 export function LoadImage(arg1) {
   return window['go']['main']['App']['LoadImage'](arg1);
 }
+
+export function SaveSettings(arg1) {
+  return window['go']['main']['App']['SaveSettings'](arg1);
+}

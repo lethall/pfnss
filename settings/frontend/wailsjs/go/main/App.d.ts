@@ -5,3 +5,5 @@ import {main} from '../models';
 export function DoKey(arg1:string):Promise<void>;
 
 export function LoadImage(arg1:number):Promise<main.FileItem>;
+
+export function SaveSettings(arg1:main.Settings):Promise<void>;

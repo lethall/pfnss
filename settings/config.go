@@ -15,6 +15,7 @@ const ABSOLUTE_PATH_PREFIX_KEY = "absolutePathPrefix"
 const CONDITIONER_REGEXP_KEY = "conditionerRegexp"
 const CONDITIONER_REPLACEMENT_KEY = "conditionerReplacement"
 const SHUFFLE_SEED_KEY = "shuffleSeed"
+const SWITCH_SEC_KEY = "switchSeconds"
 const DB_FILE_NAME = "dbFileName"
 
 func readConfig() (err error) {
@@ -64,6 +65,12 @@ func readConfig() (err error) {
 	if e != nil {
 		shuffleSeed = 1234
 	}
+
+	n, e := saver.ValueAsInt64(SWITCH_SEC_KEY)
+	if e != nil {
+		switchSeconds = 20
+	}
+	switchSeconds = int(n)
 
 	data, e := ini.Section("data")
 	if e != nil {

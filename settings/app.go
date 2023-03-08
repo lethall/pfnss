@@ -24,14 +24,22 @@ type FileItem struct {
 	Ix   int    `json:"ix"`
 }
 
+type Settings struct {
+	DbFileName    string `json:"dbFileName"`
+	AbsPrefix     string `json:"absPrefix"`
+	SwitchSeconds int    `json:"switchSeconds"`
+	ShuffleSeed   int    `json:"shuffleSeed"`
+}
+
 var files []FileItem
 var absPrefix = ""
 var conditioner regexp.Regexp
 var replacement = ""
 var shuffleSeed int64
+var switchSeconds int
 var currentIndex int
 var imageTicker *time.Ticker
-var viewDelay time.Duration = 10 * time.Second
+var viewDelay time.Duration
 var paused bool
 var dbFileName string
 
@@ -84,6 +92,7 @@ func (a *App) startup(ctx context.Context) {
 		files[i], files[j] = files[j], files[i]
 	})
 
+	viewDelay = time.Duration(switchSeconds) * time.Second
 	imageTicker = time.NewTicker(viewDelay)
 	go func() {
 		for {
@@ -218,4 +227,8 @@ func (a *App) DoKey(key string) {
 	default:
 		runtime.LogDebugf(a.ctx, "Key: %v", key)
 	}
+}
+
+func (a *App) SaveSettings(settings Settings) {
+	runtime.LogInfof(a.ctx, "Savings settings: %v", settings)
 }

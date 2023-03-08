@@ -3,8 +3,9 @@ import './app.css';
 import './bootstrap.min.css';
 import './bootstrap.bundle.min.js';
 
-import {LoadImage, DoKey} from '../wailsjs/go/main/App';
+import {LoadImage, DoKey, SaveSettings} from '../wailsjs/go/main/App';
 import {EventsOn} from '../wailsjs/runtime'
+import { main } from '../wailsjs/go/models';
 
 declare global {
     interface Window {
@@ -13,6 +14,8 @@ declare global {
         announce: (s: string) => void;
         getImage: (n: number) => void;
         configure: () => void;
+        saveSettings: () => void;
+        view: () => void;
     }
 }
 
@@ -52,6 +55,8 @@ window.doKey = function (ev: KeyboardEvent) {
     DoKey(ev.key);
 }
 
+
+
 window.announce = function (s: string) {
     (document.getElementById('announce') as HTMLSpanElement).innerHTML = s;
 }
@@ -61,7 +66,26 @@ window.configure = function () {
     document.getElementById('configure')?.classList.remove("d-none");
 }
 
+window.view = function () {
+    document.getElementById('configure')?.classList.add("d-none");
+    document.getElementById('viewer')?.classList.remove("d-none");
+    DoKey(" ")
+}
+
+window.saveSettings = function () {
+    const settings: main.Settings = {
+        dbFileName: "filename",
+        absPrefix: "prefix",
+        shuffleSeed: 123,
+        switchSeconds: 10
+    };
+    SaveSettings(settings);
+    window.view();
+}
+
 document.getElementById('viewer')?.addEventListener("click", window.loadImage);
+document.getElementById('cancel')?.addEventListener("click", window.view);
+document.getElementById('save')?.addEventListener("click", window.saveSettings);
 document.addEventListener("keyup", window.doKey);
 EventsOn("loadimage", (d: number) => { window.getImage(d); })
 EventsOn("announce", (s: string) => { window.announce(s); })
