@@ -1,0 +1,71 @@
+<html>
+
+<head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+</head>
+
+<body>
+    <form>
+        <div class="container text-primary m-3 border p-2">
+            <h3>Project Settings</h3>
+            <div class="m-2">
+                <label for="shuffleSeed" class="form-label">Shuffle Seed</label>
+                <input type="number" class="form-input" id="shuffleSeed">
+                <div class="form-text">The random shuffle seed. Use the same value to repeat the random order.</div>
+            </div>
+            <div class="m-2">
+                <label for="dbFileName" class="form-label">Project File</label>
+                <input type="file" class="form-input" id="dbFileName" accept=".pfnss">
+                <div class="form-text">The project file for this group of pictures. This stores save/delete information
+                    about these (jpg) picture files.</div>
+            </div>
+            <div class="m-2">
+                <label for="picDirs" class="form-label">Picture Folder</label>
+                <input type="file" class="form-input" id="picDirs" webkitdirectory>
+                <div class="form-text">Include picture files from these directories.</div>
+            </div>
+            <div class="row border m-1">
+                <div class="col-6">
+                    <label for="condReplacePattern" class="form-label">Replace this</label>
+                    <input type="text" class="form-input" id="condReplacePattern">
+                    <div class="form-text">Replace this part of the file name.</div>
+                </div>
+                <div class="col-6">
+                    <label for="condReplaceWith" class="form-label">With this</label>
+                    <input type="text" class="form-input" id="condReplaceWith">
+                    <div class="form-text">Replace part of the file name with this.</div>
+                </div>
+            </div>
+            <button class="btn btn-success m-1">Update</button>
+        </div>
+        <div class="form-group text-primary">
+            <h3>Find</h3>
+            id range
+            seq range
+            time range
+            logs
+            name
+        </div>
+        <div class="form-group text-primary">
+            <h3>display</h3>
+            speed
+            show name
+            show id
+            show index
+        </div>
+        <div class="form-group text-primary">
+            <h3>curate</h3>
+            execute marks
+            dest path
+            ignore marks
+        </div>
+        <button id="cancel">Cancel</button>
+        <button id="save">Save</button>
+    </form>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>
