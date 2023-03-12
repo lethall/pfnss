@@ -21,21 +21,61 @@
         <h1 class="text-success">Patricia's File Screen Saver</h1>
         <h2 class="text-success">Settings</h2>
         <form>
-            <div class="form-group text-primary">
-                <h3>DB</h3>
-                seed
-                path
-                dirs
-                filename pattern sub
-                update
-                logs
+            <div class="container text-primary m-3 border p-2">
+                <h3>Project Settings</h3>
+                <div class="m-2">
+                    <label for="shuffleSeed" class="form-label">Shuffle Seed</label>
+                    <input type="number" class="form-input" id="shuffleSeed">
+                    <div class="form-text">The random shuffle seed. Use the same value to repeat the random order.</div>
+                </div>
+                <div class="m-2">
+                    <label for="dbFileName" class="form-label">Project File</label>
+                    <input type="file" class="form-input" id="dbFileName" accept=".pfnss">
+                    <div class="form-text">The project file for this group of pictures. This stores save/delete information
+                        about these (jpg) picture files.</div>
+                </div>
+                <div class="m-2">
+                    <label for="picDirs" class="form-label">Picture Folder</label>
+                    <input type="file" class="form-input" id="picDirs" webkitdirectory>
+                    <div class="form-text">Include picture files from these directories.</div>
+                </div>
+                <div class="row border m-1">
+                    <div class="col-6">
+                        <label for="condReplacePattern" class="form-label">Replace this</label>
+                        <input type="text" class="form-input" id="condReplacePattern">
+                        <div class="form-text">Replace this part of the file name.</div>
+                    </div>
+                    <div class="col-6">
+                        <label for="condReplaceWith" class="form-label">With this</label>
+                        <input type="text" class="form-input" id="condReplaceWith">
+                        <div class="form-text">Replace part of the file name with this.</div>
+                    </div>
+                </div>
+                <button class="btn btn-success m-1">Update</button>
             </div>
             <div class="form-group text-primary">
-                <h3>Find</h3>
-                id range
-                seq range
-                time range
-                name
+                <div class="row border m-1">
+                    <div class="col-2">
+                        <label for="searchType" class="form-label">Find By</label>
+                        <select name="searchType" id="searchType">
+                            <option value="byId">File ID</option>
+                            <option value="byName">File Name</option>
+                            <option value="bySequence">Sequence</option>
+                            <option value="byShown">Time Shown</option>
+                        </select>
+                        <div class="form-text">Find using this attribute.</div>
+                    </div>
+                    <div class="col-4">
+                        <label for="findFrom" class="form-label">From</label>
+                        <input type="text" class="form-input" id="findFrom">
+                        <div class="form-text">Find starting with this value.</div>
+                    </div>
+                    <div class="col-4">
+                        <label for="findTo" class="form-label">To</label>
+                        <input type="text" class="form-input" id="findTo">
+                        <div class="form-text">Find ending with this value.</div>
+                    </div>
+                </div>
             </div>
             <div class="form-group text-primary">
                 <h3>display</h3>
