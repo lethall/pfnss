@@ -22,17 +22,23 @@
         <h2 class="text-success">Settings</h2>
         <form>
             <div class="container text-primary m-3 border p-2">
-                <h3>Project Settings</h3>
-                <div class="m-2">
-                    <label for="shuffleSeed" class="form-label">Shuffle Seed</label>
-                    <input type="number" class="form-input" id="shuffleSeed">
-                    <div class="form-text">The random shuffle seed. Use the same value to repeat the random order.</div>
+                <div class="row justify-content-start">
+                    <h3>Project Settings</h3>
+                    <div class="col-6">
+                        <label for="shuffleSeed" class="form-label">Shuffle Seed</label>
+                        <input type="number" class="form-input" id="shuffleSeed">
+                        <div class="form-text">The random shuffle seed. Use the same value to repeat the random order.
+                        </div>
+                    </div>
+                    <div class="col"></div>
                 </div>
-                <div class="m-2">
-                    <label for="dbFileName" class="form-label">Project File</label>
-                    <input type="file" class="form-input" id="dbFileName" accept=".pfnss">
-                    <div class="form-text">The project file for this group of pictures. This stores save/delete information
-                        about these (jpg) picture files.</div>
+                <div class="row justify-content-start">
+                    <div class="col">
+                        <div class="btn bg-primary" id="projectFileName">Project File</div>
+                        <div class="form-text">The project file for this group of pictures. This stores save/delete
+                            information
+                            about these (jpg) picture files.</div>
+                    </div>
                 </div>
                 <div class="m-2">
                     <label for="picDirs" class="form-label">Picture Folder</label>

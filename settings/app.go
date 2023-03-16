@@ -229,6 +229,21 @@ func (a *App) DoKey(key string) {
 	}
 }
 
+func (a *App) GetProjectFile() (fileName string) {
+	fileName, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Filters: []runtime.FileFilter{
+			{
+				DisplayName: "Project File",
+				Pattern:     "*.db",
+			},
+		},
+	})
+	if err != nil {
+		runtime.LogError(a.ctx, "Couldn't pick a file")
+	}
+	return
+}
+
 func (a *App) SaveSettings(settings Settings) {
 	runtime.LogInfof(a.ctx, "Savings settings: %v", settings)
 }

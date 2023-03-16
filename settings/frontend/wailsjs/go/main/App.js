@@ -6,6 +6,10 @@ export function DoKey(arg1) {
   return window['go']['main']['App']['DoKey'](arg1);
 }
 
+export function GetProjectFile() {
+  return window['go']['main']['App']['GetProjectFile']();
+}
+
 export function LoadImage(arg1) {
   return window['go']['main']['App']['LoadImage'](arg1);
 }
