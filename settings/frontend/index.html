@@ -18,32 +18,35 @@
         </div>
     </div>
     <div id="configure" class="d-none bg-light">
-        <h1 class="text-success">Patricia's File Screen Saver</h1>
-        <h2 class="text-success">Settings</h2>
+        <h1 class="text-success">Patricia's File Name Screen Saver</h1>
         <form>
-            <div class="container text-primary m-3 border p-2">
-                <div class="row justify-content-start">
-                    <h3>Project Settings</h3>
+            <div class="text-primary m-2 border p-2 text-start">
+                <div class="row">
+                    <div class="col fs-2 text-center">Project Settings</div>
+                </div>
+                <div class="row">
                     <div class="col-6">
                         <label for="shuffleSeed" class="form-label">Shuffle Seed</label>
                         <input type="number" class="form-input" id="shuffleSeed">
                         <div class="form-text">The random shuffle seed. Use the same value to repeat the random order.
                         </div>
                     </div>
-                    <div class="col"></div>
                 </div>
-                <div class="row justify-content-start">
-                    <div class="col">
-                        <div class="btn bg-primary" id="projectFileName">Project File</div>
+                <div class="row">
+                    <div class="col-6">
+                        <label for="projectFileName" class="form-label">Project File</label>
+                        <button class="btn btn-primary" id="projectChooser">Choose</button>
+                        <span id="projectFileName"></span>
                         <div class="form-text">The project file for this group of pictures. This stores save/delete
-                            information
-                            about these (jpg) picture files.</div>
+                            information about these (jpg) picture files.</div>
                     </div>
                 </div>
-                <div class="m-2">
-                    <label for="picDirs" class="form-label">Picture Folder</label>
-                    <input type="file" class="form-input" id="picDirs" webkitdirectory>
-                    <div class="form-text">Include picture files from these directories.</div>
+                <div class="row">
+                    <div class="col-6">
+                        <label for="picDirs" class="form-label">Picture Folder</label>
+                        <input type="file" class="form-input" id="picDirs" webkitdirectory>
+                        <div class="form-text">Include picture files from these directories.</div>
+                    </div>
                 </div>
                 <div class="row border m-1">
                     <div class="col-6">

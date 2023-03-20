@@ -3,8 +3,8 @@ import './app.css';
 import './bootstrap.min.css';
 import './bootstrap.bundle.min.js';
 
-import {LoadImage, DoKey, SaveSettings, GetProjectFile} from '../wailsjs/go/main/App';
-import {EventsOn} from '../wailsjs/runtime'
+import { LoadImage, DoKey, SaveSettings, GetProjectFile } from '../wailsjs/go/main/App';
+import { EventsOn } from '../wailsjs/runtime';
 import { main } from '../wailsjs/go/models';
 
 declare global {
@@ -15,7 +15,7 @@ declare global {
         getImage: (n: number) => void;
         configure: () => void;
         saveSettings: () => void;
-        getProjectFile: () => void;
+        getProjectFile: (ev: MouseEvent) => void;
         view: () => void;
     }
 }
@@ -84,20 +84,30 @@ window.saveSettings = function () {
     window.view();
 }
 
-window.getProjectFile = function () {
-    GetProjectFile().then((fileName) => {
-        const projectFileName = document.getElementById('projectFileName') as HTMLDivElement;
-        projectFileName.innerHTML = fileName;
-    })
-    .catch((err) => {
+window.getProjectFile = function (ev: MouseEvent) {
+    ev.preventDefault();
+    ev.stopPropagation();
+    try {
+        GetProjectFile()
+            .then((fileName) => {
+                const projectFileName = document.getElementById('projectFileName') as HTMLSpanElement;
+                projectFileName.innerHTML = fileName;
+            })
+            .catch((err) => {
+                console.error(err);
+            });
+
+    } catch (err) {
         console.error(err);
-    });;
+    }
 }
 
 document.getElementById('viewer')?.addEventListener("click", window.loadImage);
 document.getElementById('cancel')?.addEventListener("click", window.view);
 document.getElementById('save')?.addEventListener("click", window.saveSettings);
-document.getElementById('projectFileName')?.addEventListener("click", window.getProjectFile);
+document.getElementById('projectChooser')?.addEventListener("click", (ev) => {
+    window.getProjectFile(ev);
+});
 document.addEventListener("keyup", window.doKey);
 EventsOn("loadimage", (d: number) => { window.getImage(d); })
 EventsOn("announce", (s: string) => { window.announce(s); })
@@ -106,3 +116,4 @@ EventsOn("configure", () => { window.configure(); })
 let seq = 0;
 
 window.loadImage();
+// window.configure();

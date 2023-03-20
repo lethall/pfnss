@@ -6,6 +6,7 @@ import (
 	_ "image/jpeg"
 	"log"
 	"math/rand"
+	"os"
 	"regexp"
 	"time"
 
@@ -230,7 +231,14 @@ func (a *App) DoKey(key string) {
 }
 
 func (a *App) GetProjectFile() (fileName string) {
-	fileName, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+	cwd, err := os.Getwd()
+	if err != nil {
+		runtime.LogError(a.ctx, "Couldn't get current directory")
+	}
+	fileName, err = runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title:            "Project File",
+		DefaultDirectory: cwd,
+		DefaultFilename:  "pfnss.db",
 		Filters: []runtime.FileFilter{
 			{
 				DisplayName: "Project File",
@@ -241,6 +249,7 @@ func (a *App) GetProjectFile() (fileName string) {
 	if err != nil {
 		runtime.LogError(a.ctx, "Couldn't pick a file")
 	}
+	runtime.LogInfof(a.ctx, "Picked '%s'", fileName)
 	return
 }
 
