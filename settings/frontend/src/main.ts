@@ -3,7 +3,7 @@ import './app.css';
 import './bootstrap.min.css';
 import './bootstrap.bundle.min.js';
 
-import { LoadImage, DoKey, SaveSettings, GetProjectFile } from '../wailsjs/go/main/App';
+import { LoadImage, DoKey, SaveSettings, GetProjectFile, GetPicDir } from '../wailsjs/go/main/App';
 import { EventsOn } from '../wailsjs/runtime';
 import { main } from '../wailsjs/go/models';
 
@@ -16,6 +16,7 @@ declare global {
         configure: () => void;
         saveSettings: () => void;
         getProjectFile: (ev: MouseEvent) => void;
+        getPicDir: (ev: MouseEvent) => void;
         view: () => void;
     }
 }
@@ -102,12 +103,29 @@ window.getProjectFile = function (ev: MouseEvent) {
     }
 }
 
+window.getPicDir = function (ev: MouseEvent) {
+    ev.preventDefault();
+    ev.stopPropagation();
+    try {
+        GetPicDir()
+            .then((picDir) => {
+                const projectPicDir = document.getElementById('projectPicDir') as HTMLSpanElement;
+                projectPicDir.innerHTML = picDir;
+            })
+            .catch((err) => {
+                console.error(err);
+            });
+
+    } catch (err) {
+        console.error(err);
+    }
+}
+
 document.getElementById('viewer')?.addEventListener("click", window.loadImage);
 document.getElementById('cancel')?.addEventListener("click", window.view);
 document.getElementById('save')?.addEventListener("click", window.saveSettings);
-document.getElementById('projectChooser')?.addEventListener("click", (ev) => {
-    window.getProjectFile(ev);
-});
+document.getElementById('projectChooser')?.addEventListener("click", (ev) => { window.getProjectFile(ev); });
+document.getElementById('picDir')?.addEventListener("click", (ev) => { window.getPicDir(ev); });
 document.addEventListener("keyup", window.doKey);
 EventsOn("loadimage", (d: number) => { window.getImage(d); })
 EventsOn("announce", (s: string) => { window.announce(s); })

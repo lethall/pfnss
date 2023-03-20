@@ -7,6 +7,7 @@ import (
 	"regexp"
 
 	"github.com/graniticio/inifile"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // Names of the config keys
@@ -99,3 +100,42 @@ switchSeconds = 2
 */
 // func writeConfig() {
 // }
+
+func (a *App) GetProjectFile() (fileName string) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		runtime.LogError(a.ctx, "Couldn't get current directory")
+	}
+	fileName, err = runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title:            "Project File",
+		DefaultDirectory: cwd,
+		DefaultFilename:  "pfnss.db",
+		Filters: []runtime.FileFilter{
+			{
+				DisplayName: "Project File",
+				Pattern:     "*.db",
+			},
+		},
+	})
+	if err != nil {
+		runtime.LogError(a.ctx, "Couldn't pick a file")
+	}
+	runtime.LogInfof(a.ctx, "Picked '%s'", fileName)
+	return
+}
+
+func (a *App) GetPicDir() (picDir string) {
+	picDir, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
+		Title:            "Picture Directory",
+		DefaultDirectory: os.Getenv("HOME"),
+	})
+	if err != nil {
+		runtime.LogError(a.ctx, "Couldn't pick a directory")
+	}
+	runtime.LogInfof(a.ctx, "Picked '%s'", picDir)
+	return
+}
+
+func (a *App) SaveSettings(settings Settings) {
+	runtime.LogInfof(a.ctx, "Savings settings: %v", settings)
+}

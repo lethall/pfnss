@@ -4,12 +4,15 @@
 <head>
     <meta charset="UTF-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <!-- <link rel="stylesheet" href="src/style.css">
+    <link rel="stylesheet" href="src/app.css">
+    <link rel="stylesheet" href="src/bootstrap.min.css"> -->
     <title>settings</title>
 </head>
 
 <body class="container bg-dark">
 
-    <div id="viewer">
+    <div id="viewer" class="">
         <div id="photo-name">
             <span id="announce" class="badge bg-danger"></span>
             <span class="badge bg-primary"></span>
@@ -17,60 +20,52 @@
             <span class="badge bg-secondary"></span>
         </div>
     </div>
-    <div id="configure" class="d-none bg-light">
+    <div id="configure" class="bg-light d-none">
         <h1 class="text-success">Patricia's File Name Screen Saver</h1>
         <form>
-            <div class="text-primary m-2 border p-2 text-start">
-                <div class="row">
+            <div class="text-primary m-2 border p-1 text-start">
+                <div class="row p-2">
                     <div class="col fs-2 text-center">Project Settings</div>
                 </div>
-                <div class="row">
-                    <div class="col-6">
+                <div class="row p-2">
+                    <div class="col-4">
                         <label for="shuffleSeed" class="form-label">Shuffle Seed</label>
                         <input type="number" class="form-input" id="shuffleSeed">
                         <div class="form-text">The random shuffle seed. Use the same value to repeat the random order.
                         </div>
                     </div>
-                </div>
-                <div class="row">
-                    <div class="col-6">
-                        <label for="projectFileName" class="form-label">Project File</label>
-                        <button class="btn btn-primary" id="projectChooser">Choose</button>
-                        <span id="projectFileName"></span>
-                        <div class="form-text">The project file for this group of pictures. This stores save/delete
-                            information about these (jpg) picture files.</div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-6">
-                        <label for="picDirs" class="form-label">Picture Folder</label>
-                        <input type="file" class="form-input" id="picDirs" webkitdirectory>
-                        <div class="form-text">Include picture files from these directories.</div>
-                    </div>
-                </div>
-                <div class="row border m-1">
-                    <div class="col-6">
+                    <div class="col-4">
                         <label for="condReplacePattern" class="form-label">Replace this</label>
                         <input type="text" class="form-input" id="condReplacePattern">
                         <div class="form-text">Replace this part of the file name.</div>
                     </div>
-                    <div class="col-6">
+                    <div class="col-4">
                         <label for="condReplaceWith" class="form-label">With this</label>
-                        <input type="text" class="form-input" id="condReplaceWith">
+                        <input type="text" class="form-input" id="condReplaceWith" disabled>
                         <div class="form-text">Replace part of the file name with this.</div>
                     </div>
                 </div>
-                <button class="btn btn-success m-1">Update</button>
-            </div>
-            <div class="form-group text-primary">
-                <div class="row border m-1">
-                    <div class="col-2">
-                        <label for="searchType" class="form-label">Find By</label>
+                <div class="row p-2">
+                    <div class="col-6">
+                        <label for="projectFileName" class="form-label">Project File</label>
+                        <button class="btn btn-primary" id="projectChooser">Choose</button>
+                        <span id="projectFileName"></span>
+                        <div class="form-text">The project file for this group of pictures. </div>
+                    </div>
+                    <div class="col-6">
+                        <label for="picDir" class="form-label">Picture Folder</label>
+                        <button class="btn btn-primary" id="picDir">Choose</button>
+                        <span id="projectPicDir"></span>
+                        <div class="form-text">Include jpg picture files from this directory.</div>
+                    </div>
+                </div>
+                <div class="row p-2 m-2 border">
+                    <div class="col-4">
                         <select name="searchType" id="searchType">
-                            <option value="byId">File ID</option>
-                            <option value="byName">File Name</option>
-                            <option value="bySequence">Sequence</option>
-                            <option value="byShown">Time Shown</option>
+                            <option value="byId">Find by File ID</option>
+                            <option value="byName">Find by File Name</option>
+                            <option value="bySequence">Find by Sequence</option>
+                            <option value="byShown">Find by Time Shown</option>
                         </select>
                         <div class="form-text">Find using this attribute.</div>
                     </div>
@@ -99,10 +94,16 @@
                 dest path
                 ignore marks
             </div>
-            <button id="cancel">Cancel</button>
-            <button id="save">Save</button>
+            <div class="row p-2">
+                <div class="col-9"></div>
+                <div class="col-3">
+                    <button class="btn btn-secondary m-1">Cancel</button>
+                    <button class="btn btn-success m-1">Update</button>
+                </div>
+            </div>
         </form>
     </div>
+    <!-- <script src="./src/bootstrap.bundle.min.js"></script> -->
     <script src="./src/main.ts" type="module"></script>
 </body>
 

@@ -4,6 +4,8 @@ import {main} from '../models';
 
 export function DoKey(arg1:string):Promise<void>;
 
+export function GetPicDir():Promise<string>;
+
 export function GetProjectFile():Promise<string>;
 
 export function LoadImage(arg1:number):Promise<main.FileItem>;
