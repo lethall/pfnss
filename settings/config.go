@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"regexp"
@@ -151,6 +153,8 @@ func (a *App) GetPicDir() (picDir string) {
 func (a *App) SaveSettings(settings Settings) {
 	runtime.LogInfof(a.ctx, "Update settings: %v", settings)
 	a.settings = settings
+	newSettings, _ := json.Marshal(a.settings)
+	ioutil.WriteFile("pfnss.json", newSettings, 0644)
 	a.configure()
 }
 

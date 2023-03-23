@@ -41,14 +41,13 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	if err := readConfig(a); err != nil {
+		log.Fatalf("failed to read ini file %v\n", err)
+	}
 	a.configure()
 }
 
 func (a *App) configure() {
-	if err := readConfig(a); err != nil {
-		log.Fatalf("failed to read ini file %v\n", err)
-	}
-
 	db, err := sql.Open("sqlite", a.settings.DbFileName)
 	if err != nil {
 		log.Fatalf("Failed to read DB")
@@ -61,7 +60,8 @@ func (a *App) configure() {
 		}
 	}()
 
-	rows, err := db.Query("select id, name from files;")
+	a.files = []FileItem{}
+	rows, err := db.Query("select id, name from files order by id;")
 	if err != nil {
 		log.Fatalf("Failed to query files from %v", a.settings.DbFileName)
 	}
@@ -80,12 +80,18 @@ func (a *App) configure() {
 	}
 
 	rand.Seed(a.settings.ShuffleSeed)
-	log.Println("shuffle seed: ", a.settings.ShuffleSeed)
+	runtime.LogInfof(a.ctx, "Shuffle seed: %d", a.settings.ShuffleSeed)
 	rand.Shuffle(len(a.files), func(i int, j int) {
 		a.files[i], a.files[j] = a.files[j], a.files[i]
 	})
+	a.currentIndex = 0
+
+	if a.imageTicker != nil {
+		a.imageTicker.Stop()
+	}
 
 	a.viewDelay = time.Duration(a.settings.SwitchSeconds) * time.Second
+	a.paused = false
 	a.imageTicker = time.NewTicker(a.viewDelay)
 	go func() {
 		for {

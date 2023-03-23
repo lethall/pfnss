@@ -88,6 +88,11 @@ window.view = () => {
 }
 
 window.saveSettings = () => {
+    const shuffleSeedField = document.getElementById("shuffleSeed") as HTMLInputElement;
+    window.settings.shuffleSeed = shuffleSeedField.valueAsNumber;
+    const showTimer = document.getElementById("showTimer") as HTMLInputElement;
+    window.settings.switchSeconds = showTimer.valueAsNumber;
+
     SaveSettings(window.settings);
     window.view();
 }
