@@ -22,6 +22,9 @@ type Settings struct {
 	FindFrom       string `json:"findFrom"`
 	FindTo         string `json:"findTo"`
 	SwitchSeconds  int    `json:"switchSeconds"`
+	ShowId         bool   `json:"showId"`
+	ShowSeq        bool   `json:"showSeq"`
+	ShowName       bool   `json:"showName"`
 }
 
 // Names of the config keys
@@ -31,7 +34,7 @@ const CONDITIONER_REGEXP_KEY = "conditionerRegexp"
 const CONDITIONER_REPLACEMENT_KEY = "conditionerReplacement"
 const SHUFFLE_SEED_KEY = "shuffleSeed"
 const SWITCH_SEC_KEY = "switchSeconds"
-const DB_FILE_NAME = "dbFileName"
+const DB_FILE_NAME_KEY = "dbFileName"
 
 func readConfig(a *App) (err error) {
 	iniFile, e := os.Open("pfnss.ini")
@@ -91,10 +94,14 @@ func readConfig(a *App) (err error) {
 	if e != nil {
 		return fmt.Errorf("failed to read the data section - %q", e)
 	}
-	a.settings.DbFileName, e = data.Value(DB_FILE_NAME)
+	a.settings.DbFileName, e = data.Value(DB_FILE_NAME_KEY)
 	if e != nil {
 		return fmt.Errorf("failed to read dbFileName - %q", e)
 	}
+
+	a.settings.ShowId = true
+	a.settings.ShowSeq = true
+	a.settings.ShowName = true
 
 	return nil
 }

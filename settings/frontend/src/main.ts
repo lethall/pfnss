@@ -68,10 +68,13 @@ window.configure = () => {
     GetSettings()
         .then((currentSettings) => {
             window.settings = currentSettings;
-            const shuffleSeedField = document.getElementById("shuffleSeed") as HTMLInputElement;
-            shuffleSeedField.valueAsNumber = window.settings.shuffleSeed;
-            const showTimer = document.getElementById("showTimer") as HTMLInputElement;
-            showTimer.valueAsNumber = window.settings.switchSeconds;
+            (document.getElementById("shuffleSeed") as HTMLInputElement).valueAsNumber = window.settings.shuffleSeed;
+            (document.getElementById("showTimer") as HTMLInputElement).valueAsNumber = window.settings.switchSeconds;
+            (document.getElementById("dbFileName") as HTMLSpanElement).innerHTML = window.settings.dbFileName;
+            (document.getElementById("picDir") as HTMLSpanElement).innerHTML = window.settings.picDir;
+            (document.getElementById("showId") as HTMLInputElement).checked = window.settings.showId;
+            (document.getElementById("showSeq") as HTMLInputElement).checked = window.settings.showSeq;
+            (document.getElementById("showName") as HTMLInputElement).checked = window.settings.showName;
 
             document.getElementById('viewer')?.classList.add("d-none");
             document.getElementById('configure')?.classList.remove("d-none");
@@ -88,10 +91,13 @@ window.view = () => {
 }
 
 window.saveSettings = () => {
-    const shuffleSeedField = document.getElementById("shuffleSeed") as HTMLInputElement;
-    window.settings.shuffleSeed = shuffleSeedField.valueAsNumber;
-    const showTimer = document.getElementById("showTimer") as HTMLInputElement;
-    window.settings.switchSeconds = showTimer.valueAsNumber;
+    window.settings.shuffleSeed = (document.getElementById("shuffleSeed") as HTMLInputElement).valueAsNumber;
+    window.settings.switchSeconds = (document.getElementById("showTimer") as HTMLInputElement).valueAsNumber;
+    window.settings.dbFileName = (document.getElementById("dbFileName") as HTMLSpanElement).innerHTML;
+    window.settings.picDir = (document.getElementById("picDir") as HTMLSpanElement).innerHTML;
+    window.settings.showId = (document.getElementById("showId") as HTMLInputElement).checked;
+    window.settings.showSeq = (document.getElementById("showSeq") as HTMLInputElement).checked;
+    window.settings.showName = (document.getElementById("showName") as HTMLInputElement).checked;
 
     SaveSettings(window.settings);
     window.view();
@@ -103,8 +109,7 @@ window.getProjectFile = function (ev: MouseEvent) {
     try {
         GetProjectFile()
             .then((fileName) => {
-                const projectFileName = document.getElementById('projectFileName') as HTMLSpanElement;
-                projectFileName.innerHTML = fileName;
+                (document.getElementById('dbFileName') as HTMLSpanElement).innerHTML = fileName;
             })
             .catch((err) => {
                 console.error(err);
@@ -121,8 +126,7 @@ window.getPicDir = function (ev: MouseEvent) {
     try {
         GetPicDir()
             .then((picDir) => {
-                const projectPicDir = document.getElementById('projectPicDir') as HTMLSpanElement;
-                projectPicDir.innerHTML = picDir;
+                (document.getElementById('picDir') as HTMLSpanElement).innerHTML = picDir;
             })
             .catch((err) => {
                 console.error(err);
@@ -137,7 +141,7 @@ document.getElementById('viewer')?.addEventListener("click", window.loadImage);
 document.getElementById('cancel')?.addEventListener("click", window.view);
 document.getElementById('save')?.addEventListener("click", window.saveSettings);
 document.getElementById('projectChooser')?.addEventListener("click", (ev) => { window.getProjectFile(ev); });
-document.getElementById('picDir')?.addEventListener("click", (ev) => { window.getPicDir(ev); });
+document.getElementById('picDirChooser')?.addEventListener("click", (ev) => { window.getPicDir(ev); });
 document.addEventListener("keyup", window.doKey);
 EventsOn("loadimage", (d: number) => { window.getImage(d); })
 EventsOn("announce", (s: string) => { window.announce(s); })

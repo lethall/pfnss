@@ -26,6 +26,9 @@ export namespace main {
 	    findFrom: string;
 	    findTo: string;
 	    switchSeconds: number;
+	    showId: boolean;
+	    showSeq: boolean;
+	    showName: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Settings(source);
@@ -42,6 +45,9 @@ export namespace main {
 	        this.findFrom = source["findFrom"];
 	        this.findTo = source["findTo"];
 	        this.switchSeconds = source["switchSeconds"];
+	        this.showId = source["showId"];
+	        this.showSeq = source["showSeq"];
+	        this.showName = source["showName"];
 	    }
 	}
 
