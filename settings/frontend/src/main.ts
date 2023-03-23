@@ -69,12 +69,17 @@ window.configure = () => {
         .then((currentSettings) => {
             window.settings = currentSettings;
             (document.getElementById("shuffleSeed") as HTMLInputElement).valueAsNumber = window.settings.shuffleSeed;
+            (document.getElementById("replacePattern") as HTMLInputElement).value = window.settings.replacePattern;
+            (document.getElementById("replaceWith") as HTMLInputElement).value = window.settings.replaceWith;
             (document.getElementById("showTimer") as HTMLInputElement).valueAsNumber = window.settings.switchSeconds;
             (document.getElementById("dbFileName") as HTMLSpanElement).innerHTML = window.settings.dbFileName;
             (document.getElementById("picDir") as HTMLSpanElement).innerHTML = window.settings.picDir;
             (document.getElementById("showId") as HTMLInputElement).checked = window.settings.showId;
             (document.getElementById("showSeq") as HTMLInputElement).checked = window.settings.showSeq;
             (document.getElementById("showName") as HTMLInputElement).checked = window.settings.showName;
+            (document.getElementById("findType") as HTMLSelectElement).value = window.settings.findType;
+            (document.getElementById("findFrom") as HTMLInputElement).value = window.settings.findFrom;
+            (document.getElementById("findTo") as HTMLInputElement).value = window.settings.findTo;
 
             document.getElementById('viewer')?.classList.add("d-none");
             document.getElementById('configure')?.classList.remove("d-none");
@@ -92,12 +97,17 @@ window.view = () => {
 
 window.saveSettings = () => {
     window.settings.shuffleSeed = (document.getElementById("shuffleSeed") as HTMLInputElement).valueAsNumber;
+    window.settings.replacePattern = (document.getElementById("replacePattern") as HTMLInputElement).value;
+    window.settings.replaceWith = (document.getElementById("replaceWith") as HTMLInputElement).value;
     window.settings.switchSeconds = (document.getElementById("showTimer") as HTMLInputElement).valueAsNumber;
     window.settings.dbFileName = (document.getElementById("dbFileName") as HTMLSpanElement).innerHTML;
     window.settings.picDir = (document.getElementById("picDir") as HTMLSpanElement).innerHTML;
     window.settings.showId = (document.getElementById("showId") as HTMLInputElement).checked;
     window.settings.showSeq = (document.getElementById("showSeq") as HTMLInputElement).checked;
     window.settings.showName = (document.getElementById("showName") as HTMLInputElement).checked;
+    window.settings.findType = (document.getElementById("findType") as HTMLSelectElement).value;
+    window.settings.findFrom = (document.getElementById("findFrom") as HTMLInputElement).value;
+    window.settings.findTo = (document.getElementById("findTo") as HTMLInputElement).value;
 
     SaveSettings(window.settings);
     window.view();
