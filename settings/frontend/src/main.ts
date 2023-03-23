@@ -3,7 +3,7 @@ import './app.css';
 import './bootstrap.min.css';
 import './bootstrap.bundle.min.js';
 
-import { LoadImage, DoKey, SaveSettings, GetProjectFile, GetPicDir } from '../wailsjs/go/main/App';
+import { LoadImage, DoKey, SaveSettings, GetSettings, GetProjectFile, GetPicDir } from '../wailsjs/go/main/App';
 import { EventsOn } from '../wailsjs/runtime';
 import { main } from '../wailsjs/go/models';
 
@@ -18,10 +18,11 @@ declare global {
         getProjectFile: (ev: MouseEvent) => void;
         getPicDir: (ev: MouseEvent) => void;
         view: () => void;
+        settings: main.Settings;
     }
 }
 
-window.loadImage = function () {
+window.loadImage = () => {
     try {
         LoadImage(seq)
             .then((fileItem) => {
@@ -63,25 +64,31 @@ window.announce = function (s: string) {
     (document.getElementById('announce') as HTMLSpanElement).innerHTML = s;
 }
 
-window.configure = function () {
-    document.getElementById('viewer')?.classList.add("d-none");
-    document.getElementById('configure')?.classList.remove("d-none");
+window.configure = () => {
+    GetSettings()
+        .then((currentSettings) => {
+            window.settings = currentSettings;
+            const shuffleSeedField = document.getElementById("shuffleSeed") as HTMLInputElement;
+            shuffleSeedField.valueAsNumber = window.settings.shuffleSeed;
+            const showTimer = document.getElementById("showTimer") as HTMLInputElement;
+            showTimer.valueAsNumber = window.settings.switchSeconds;
+
+            document.getElementById('viewer')?.classList.add("d-none");
+            document.getElementById('configure')?.classList.remove("d-none");
+        }
+        ).catch((err) => {
+            console.error(err);
+        });
 }
 
-window.view = function () {
+window.view = () => {
     document.getElementById('configure')?.classList.add("d-none");
     document.getElementById('viewer')?.classList.remove("d-none");
-    DoKey(" ")
+    DoKey("!")
 }
 
-window.saveSettings = function () {
-    const settings: main.Settings = {
-        dbFileName: "filename",
-        absPrefix: "prefix",
-        shuffleSeed: 123,
-        switchSeconds: 10
-    };
-    SaveSettings(settings);
+window.saveSettings = () => {
+    SaveSettings(window.settings);
     window.view();
 }
 

@@ -6,6 +6,7 @@ pfnss_wrapper.log
 ss.log
 .idea/
 *.db
+*.db-journal
 *.exe
 /.python-version
 go.sum

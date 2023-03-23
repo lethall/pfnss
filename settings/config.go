@@ -10,6 +10,18 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
+type Settings struct {
+	ShuffleSeed    int64  `json:"shuffleSeed"`
+	DbFileName     string `json:"dbFileName"`
+	PicDir         string `json:"picDir"`
+	ReplacePattern string `json:"replacePattern"`
+	ReplaceWith    string `json:"replaceWith"`
+	FindType       string `json:"findType"`
+	FindFrom       string `json:"findFrom"`
+	FindTo         string `json:"findTo"`
+	SwitchSeconds  int    `json:"switchSeconds"`
+}
+
 // Names of the config keys
 const ALTERNATE_INIFILENAME_KEY = "iniFileName"
 const ABSOLUTE_PATH_PREFIX_KEY = "absolutePathPrefix"
@@ -19,7 +31,7 @@ const SHUFFLE_SEED_KEY = "shuffleSeed"
 const SWITCH_SEC_KEY = "switchSeconds"
 const DB_FILE_NAME = "dbFileName"
 
-func readConfig() (err error) {
+func readConfig(a *App) (err error) {
 	iniFile, e := os.Open("pfnss.ini")
 	if e != nil {
 		return fmt.Errorf(fmt.Sprintf("could not open the ini file - %q", e))
@@ -52,32 +64,32 @@ func readConfig() (err error) {
 		return fmt.Errorf("failed to read the saver section - %q", e)
 	}
 
-	absPrefix, _ = saver.Value(ABSOLUTE_PATH_PREFIX_KEY)
-	conditionerSource := ""
-	conditionerSource, _ = saver.Value(CONDITIONER_REGEXP_KEY)
-	c, e := regexp.Compile(conditionerSource)
+	a.absPrefix, _ = saver.Value(ABSOLUTE_PATH_PREFIX_KEY)
+	a.settings.ReplacePattern = ""
+	a.settings.ReplacePattern, _ = saver.Value(CONDITIONER_REGEXP_KEY)
+	c, e := regexp.Compile(a.settings.ReplacePattern)
 	if e == nil {
-		conditioner = *c
+		a.conditioner = *c
 	}
 
-	replacement, _ = saver.Value(CONDITIONER_REPLACEMENT_KEY)
+	a.settings.ReplaceWith, _ = saver.Value(CONDITIONER_REPLACEMENT_KEY)
 
-	shuffleSeed, e = saver.ValueAsInt64(SHUFFLE_SEED_KEY)
+	a.settings.ShuffleSeed, e = saver.ValueAsInt64(SHUFFLE_SEED_KEY)
 	if e != nil {
-		shuffleSeed = 1234
+		a.settings.ShuffleSeed = 1234
 	}
 
 	n, e := saver.ValueAsInt64(SWITCH_SEC_KEY)
 	if e != nil {
-		switchSeconds = 20
+		a.settings.SwitchSeconds = 20
 	}
-	switchSeconds = int(n)
+	a.settings.SwitchSeconds = int(n)
 
 	data, e := ini.Section("data")
 	if e != nil {
 		return fmt.Errorf("failed to read the data section - %q", e)
 	}
-	dbFileName, e = data.Value(DB_FILE_NAME)
+	a.settings.DbFileName, e = data.Value(DB_FILE_NAME)
 	if e != nil {
 		return fmt.Errorf("failed to read dbFileName - %q", e)
 	}
@@ -137,5 +149,11 @@ func (a *App) GetPicDir() (picDir string) {
 }
 
 func (a *App) SaveSettings(settings Settings) {
-	runtime.LogInfof(a.ctx, "Savings settings: %v", settings)
+	runtime.LogInfof(a.ctx, "Update settings: %v", settings)
+	a.settings = settings
+	a.configure()
+}
+
+func (a *App) GetSettings() (settings Settings) {
+	return a.settings
 }

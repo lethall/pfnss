@@ -35,13 +35,13 @@
                         </div>
                     </div>
                     <div class="col-4">
-                        <label for="condReplacePattern" class="form-label">Replace this</label>
-                        <input type="text" class="form-input" id="condReplacePattern">
+                        <label for="replacePattern" class="form-label">Replace this</label>
+                        <input type="text" class="form-input" id="replacePattern">
                         <div class="form-text">Replace this part of the file name.</div>
                     </div>
                     <div class="col-4">
-                        <label for="condReplaceWith" class="form-label">With this</label>
-                        <input type="text" class="form-input" id="condReplaceWith" disabled>
+                        <label for="replaceWith" class="form-label">With this</label>
+                        <input type="text" class="form-input" id="replaceWith" disabled>
                         <div class="form-text">Replace part of the file name with this.</div>
                     </div>
                 </div>
@@ -61,7 +61,7 @@
                 </div>
                 <div class="row p-2 m-2 border">
                     <div class="col-4">
-                        <select name="searchType" id="searchType">
+                        <select name="searchType" id="searchType" class="form-select">
                             <option value="byId">Find by File ID</option>
                             <option value="byName">Find by File Name</option>
                             <option value="bySequence">Find by Sequence</option>
@@ -80,25 +80,46 @@
                         <div class="form-text">Find ending with this value.</div>
                     </div>
                 </div>
-            </div>
-            <div class="form-group text-primary">
-                <h3>display</h3>
-                speed
-                show name
-                show id
-                show index
-            </div>
-            <div class="form-group text-primary">
-                <h3>curate</h3>
-                execute marks
-                dest path
-                ignore marks
+                <div class="row p-2 m-2 border">
+                    <div class="col-6">
+                        <label for="showTimer" class="form-label">Show duration (seconds)</label>
+                        <input type="number" class="form-input" id="showTimer">
+                        <div class="form-text">How many seconds to show each picture.
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="" id="showName">
+                            <label class="form-check-label" for="showName">
+                                Show name
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="" id="showId">
+                            <label class="form-check-label" for="showId">
+                                Show ID
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="" id="showIndex">
+                            <label class="form-check-label" for="showIndex">
+                                Show index
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <!-- <div class="form-group text-primary">
+                        <h3>curate</h3>
+                        execute marks
+                        dest path
+                        ignore marks
+                    </div> -->
             </div>
             <div class="row p-2">
                 <div class="col-9"></div>
                 <div class="col-3">
-                    <button class="btn btn-secondary m-1">Cancel</button>
-                    <button class="btn btn-success m-1">Update</button>
+                    <button id="cancel" class="btn btn-secondary m-1">Cancel</button>
+                    <button id="save" class="btn btn-success m-1">Update</button>
                 </div>
             </div>
         </form>

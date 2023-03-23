@@ -15,7 +15,15 @@ import (
 
 // App struct
 type App struct {
-	ctx context.Context
+	ctx          context.Context
+	settings     Settings
+	conditioner  regexp.Regexp
+	files        []FileItem
+	currentIndex int
+	imageTicker  *time.Ticker
+	viewDelay    time.Duration
+	paused       bool
+	absPrefix    string
 }
 
 type FileItem struct {
@@ -23,25 +31,6 @@ type FileItem struct {
 	Name string `json:"name"`
 	Ix   int    `json:"ix"`
 }
-
-type Settings struct {
-	DbFileName    string `json:"dbFileName"`
-	AbsPrefix     string `json:"absPrefix"`
-	SwitchSeconds int    `json:"switchSeconds"`
-	ShuffleSeed   int    `json:"shuffleSeed"`
-}
-
-var files []FileItem
-var absPrefix = ""
-var conditioner regexp.Regexp
-var replacement = ""
-var shuffleSeed int64
-var switchSeconds int
-var currentIndex int
-var imageTicker *time.Ticker
-var viewDelay time.Duration
-var paused bool
-var dbFileName string
 
 // NewApp creates a new App application struct
 func NewApp() *App {
@@ -52,11 +41,15 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
-	if err := readConfig(); err != nil {
+	a.configure()
+}
+
+func (a *App) configure() {
+	if err := readConfig(a); err != nil {
 		log.Fatalf("failed to read ini file %v\n", err)
 	}
 
-	db, err := sql.Open("sqlite", dbFileName)
+	db, err := sql.Open("sqlite", a.settings.DbFileName)
 	if err != nil {
 		log.Fatalf("Failed to read DB")
 	}
@@ -70,7 +63,7 @@ func (a *App) startup(ctx context.Context) {
 
 	rows, err := db.Query("select id, name from files;")
 	if err != nil {
-		log.Fatalf("Failed to query files from %v", dbFileName)
+		log.Fatalf("Failed to query files from %v", a.settings.DbFileName)
 	}
 
 	for rows.Next() {
@@ -79,35 +72,35 @@ func (a *App) startup(ctx context.Context) {
 			log.Fatalf("Failed to scan fileName %v", err)
 		}
 
-		files = append(files, fi)
+		a.files = append(a.files, fi)
 	}
 
 	if err = rows.Err(); err != nil {
 		log.Fatalf("Could not use result set")
 	}
 
-	rand.Seed(shuffleSeed)
-	log.Println("shuffle seed: ", shuffleSeed)
-	rand.Shuffle(len(files), func(i int, j int) {
-		files[i], files[j] = files[j], files[i]
+	rand.Seed(a.settings.ShuffleSeed)
+	log.Println("shuffle seed: ", a.settings.ShuffleSeed)
+	rand.Shuffle(len(a.files), func(i int, j int) {
+		a.files[i], a.files[j] = a.files[j], a.files[i]
 	})
 
-	viewDelay = time.Duration(switchSeconds) * time.Second
-	imageTicker = time.NewTicker(viewDelay)
+	a.viewDelay = time.Duration(a.settings.SwitchSeconds) * time.Second
+	a.imageTicker = time.NewTicker(a.viewDelay)
 	go func() {
 		for {
 			select {
-			case <-imageTicker.C:
-				currentIndex++
-				runtime.EventsEmit(a.ctx, "loadimage", currentIndex)
+			case <-a.imageTicker.C:
+				a.currentIndex++
+				runtime.EventsEmit(a.ctx, "loadimage", a.currentIndex)
 			}
 		}
 	}()
 }
 
-func mark(indx int, action string) {
-	fileId := files[indx].Id
-	db, err := sql.Open("sqlite", dbFileName)
+func (a *App) mark(action string) {
+	fileId := a.files[a.currentIndex].Id
+	db, err := sql.Open("sqlite", a.settings.DbFileName)
 	if err != nil {
 		log.Fatalf("Failed to read DB")
 	}
@@ -127,9 +120,9 @@ func mark(indx int, action string) {
 
 }
 
-func logView(indx int) {
-	fileId := files[indx].Id
-	db, err := sql.Open("sqlite", dbFileName)
+func (a *App) logView() {
+	fileId := a.files[a.currentIndex].Id
+	db, err := sql.Open("sqlite", a.settings.DbFileName)
 	if err != nil {
 		log.Fatalf("Failed to read DB")
 	}
@@ -149,35 +142,34 @@ func logView(indx int) {
 
 }
 
-func conditionFileName(ctx context.Context, item FileItem, ix int) FileItem {
+func (a *App) conditionFileName(item FileItem) FileItem {
 	newItem := FileItem{
 		Id: item.Id,
-		Ix: ix,
+		Ix: a.currentIndex,
 	}
 
 	s := item.Name
-	if conditioner.String() != "" {
-		s = conditioner.ReplaceAllString(item.Name, replacement)
+	if a.conditioner.String() != "" {
+		s = a.conditioner.ReplaceAllString(item.Name, a.settings.ReplaceWith)
 	}
-	runtime.LogDebugf(ctx, "AbsPrefix: %s FileName: %s", absPrefix, s)
-	newItem.Name = absPrefix + s
+	newItem.Name = a.absPrefix + s
 
 	return newItem
 }
 
 func (a *App) LoadImage(imageIndex int) FileItem {
-	if len(files) == 0 {
+	if len(a.files) == 0 {
 		return FileItem{}
 	}
 	if imageIndex < 0 {
-		imageIndex = len(files) - 1
+		imageIndex = len(a.files) - 1
 	}
-	if imageIndex >= len(files) {
+	if imageIndex >= len(a.files) {
 		imageIndex = 0
 	}
-	currentIndex = imageIndex
-	logView(currentIndex)
-	return conditionFileName(a.ctx, files[imageIndex], currentIndex)
+	a.currentIndex = imageIndex
+	a.logView()
+	return a.conditionFileName(a.files[imageIndex])
 }
 
 func (a *App) DoKey(key string) {
@@ -192,15 +184,15 @@ func (a *App) DoKey(key string) {
 			runtime.WindowFullscreen(a.ctx)
 		}
 	case "n", "ArrowRight", "ArrowDown":
-		currentIndex++
-		imageTicker.Reset(viewDelay)
-		runtime.EventsEmit(a.ctx, "loadimage", currentIndex)
+		a.currentIndex++
+		a.imageTicker.Reset(a.viewDelay)
+		runtime.EventsEmit(a.ctx, "loadimage", a.currentIndex)
 	case "p", "ArrowLeft", "ArrowUp":
-		currentIndex--
-		imageTicker.Reset(viewDelay)
-		runtime.EventsEmit(a.ctx, "loadimage", currentIndex)
+		a.currentIndex--
+		a.imageTicker.Reset(a.viewDelay)
+		runtime.EventsEmit(a.ctx, "loadimage", a.currentIndex)
 	case "s", "d", "e":
-		mark(currentIndex, key)
+		a.mark(key)
 		action := ""
 		switch key {
 		case "s":
@@ -212,17 +204,21 @@ func (a *App) DoKey(key string) {
 		}
 		runtime.EventsEmit(a.ctx, "announce", action)
 	case " ", "Enter":
-		paused = !paused
-		if paused {
-			imageTicker.Stop()
+		a.paused = !a.paused
+		if a.paused {
+			a.imageTicker.Stop()
 			runtime.EventsEmit(a.ctx, "announce", "Paused")
 		} else {
-			imageTicker.Reset(viewDelay)
+			a.imageTicker.Reset(a.viewDelay)
 			runtime.EventsEmit(a.ctx, "announce", "")
 		}
+	case "!":
+		a.paused = false
+		a.imageTicker.Reset(a.viewDelay)
+		runtime.EventsEmit(a.ctx, "announce", "")
 	case "c":
-		imageTicker.Stop()
-		paused = true
+		a.imageTicker.Stop()
+		a.paused = true
 		runtime.EventsEmit(a.ctx, "configure")
 	default:
 		runtime.LogDebugf(a.ctx, "Key: %v", key)

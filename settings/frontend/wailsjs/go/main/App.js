@@ -14,6 +14,10 @@ export function GetProjectFile() {
   return window['go']['main']['App']['GetProjectFile']();
 }
 
+export function GetSettings() {
+  return window['go']['main']['App']['GetSettings']();
+}
+
 export function LoadImage(arg1) {
   return window['go']['main']['App']['LoadImage'](arg1);
 }
