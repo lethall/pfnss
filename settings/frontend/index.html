@@ -62,6 +62,7 @@
                 <div class="row p-2 m-2 border">
                     <div class="col-4">
                         <select name="findType" id="findType" class="form-select">
+                            <option value="byAll">Show All</option>
                             <option value="byId">Find by File ID</option>
                             <option value="byName">Find by File Name</option>
                             <option value="bySequence">Find by Sequence</option>
@@ -69,14 +70,14 @@
                         </select>
                         <div class="form-text">Find using this attribute.</div>
                     </div>
-                    <div class="col-4">
+                    <div class="col-4 finders">
                         <label for="findFrom" class="form-label">From</label>
-                        <input type="text" class="form-input" id="findFrom">
+                        <input type="text" class="form-input" id="findFrom" disabled>
                         <div class="form-text">Find starting with this value.</div>
                     </div>
-                    <div class="col-4">
+                    <div class="col-4 finders">
                         <label for="findTo" class="form-label">To</label>
-                        <input type="text" class="form-input" id="findTo">
+                        <input type="text" class="form-input" id="findTo" disabled>
                         <div class="form-text">Find ending with this value.</div>
                     </div>
                 </div>

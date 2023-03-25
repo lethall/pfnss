@@ -99,6 +99,8 @@ func readConfig(a *App) (err error) {
 		return fmt.Errorf("failed to read dbFileName - %q", e)
 	}
 
+	a.settings.FindType = "byAll"
+
 	a.settings.ShowId = true
 	a.settings.ShowSeq = true
 	a.settings.ShowName = true

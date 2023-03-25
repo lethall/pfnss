@@ -17,6 +17,8 @@ declare global {
         saveSettings: () => void;
         getProjectFile: (ev: MouseEvent) => void;
         getPicDir: (ev: MouseEvent) => void;
+        changeFindType: (findType: string) => void;
+        applyClass: (items: HTMLCollection, className: string, add: Boolean) => void;
         view: () => void;
         settings: main.Settings;
     }
@@ -81,6 +83,7 @@ window.configure = () => {
             (document.getElementById("findFrom") as HTMLInputElement).value = window.settings.findFrom;
             (document.getElementById("findTo") as HTMLInputElement).value = window.settings.findTo;
 
+            window.changeFindType(window.settings.findType);
             document.getElementById('viewer')?.classList.add("d-none");
             document.getElementById('configure')?.classList.remove("d-none");
         }
@@ -113,7 +116,7 @@ window.saveSettings = () => {
     window.view();
 }
 
-window.getProjectFile = function (ev: MouseEvent) {
+window.getProjectFile = (ev: MouseEvent) => {
     ev.preventDefault();
     ev.stopPropagation();
     try {
@@ -130,7 +133,7 @@ window.getProjectFile = function (ev: MouseEvent) {
     }
 }
 
-window.getPicDir = function (ev: MouseEvent) {
+window.getPicDir = (ev: MouseEvent) => {
     ev.preventDefault();
     ev.stopPropagation();
     try {
@@ -147,11 +150,35 @@ window.getPicDir = function (ev: MouseEvent) {
     }
 }
 
+window.applyClass = (items: HTMLCollection, classNme: string, add: Boolean) => {
+    for (var ii = 0; ii < items.length; ++ii) {
+        const item = items[ii] as HTMLDivElement;
+        if (add) {
+            item.classList.add(classNme);
+        } else {
+            item.classList.remove(classNme);
+        }
+    }
+}
+
+window.changeFindType = (findType: string) => {
+    if (findType == "byAll") {
+        (document.getElementById('findFrom') as HTMLInputElement).disabled = true;
+        (document.getElementById('findTo') as HTMLInputElement).disabled = true;
+        window.applyClass(document.getElementsByClassName('finders'), "d-none", true);
+    } else {
+        (document.getElementById('findFrom') as HTMLInputElement).disabled = false;
+        (document.getElementById('findTo') as HTMLInputElement).disabled = false;
+        window.applyClass(document.getElementsByClassName('finders'), "d-none", false);
+    }
+}
+
 document.getElementById('viewer')?.addEventListener("click", window.loadImage);
 document.getElementById('cancel')?.addEventListener("click", window.view);
 document.getElementById('save')?.addEventListener("click", window.saveSettings);
 document.getElementById('projectChooser')?.addEventListener("click", (ev) => { window.getProjectFile(ev); });
 document.getElementById('picDirChooser')?.addEventListener("click", (ev) => { window.getPicDir(ev); });
+document.getElementById('findType')?.addEventListener("change", (ev) => { window.changeFindType((ev.target as HTMLSelectElement).value); });
 document.addEventListener("keyup", window.doKey);
 EventsOn("loadimage", (d: number) => { window.getImage(d); })
 EventsOn("announce", (s: string) => { window.announce(s); })
