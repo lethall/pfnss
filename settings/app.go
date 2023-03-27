@@ -79,6 +79,13 @@ func (a *App) configure() {
 		log.Fatalf("Could not use result set")
 	}
 
+	if a.settings.ReplacePattern == "" {
+		a.absPrefix = a.settings.PicDir + "/"
+	} else {
+		a.absPrefix = ""
+		a.conditioner = *regexp.MustCompile(a.settings.ReplacePattern)
+	}
+
 	rand.Seed(a.settings.ShuffleSeed)
 	runtime.LogInfof(a.ctx, "Shuffle seed: %d", a.settings.ShuffleSeed)
 	rand.Shuffle(len(a.files), func(i int, j int) {

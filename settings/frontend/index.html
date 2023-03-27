@@ -28,6 +28,20 @@
                     <div class="col fs-2 text-center">Project Settings</div>
                 </div>
                 <div class="row p-2">
+                    <div class="col-6">
+                        <label for="projectChooser" class="form-label">Project File</label>
+                        <button class="btn btn-primary" id="projectChooser">Choose</button>
+                        <span id="dbFileName"></span>
+                        <div class="form-text">The project file for this group of pictures. </div>
+                    </div>
+                    <div class="col-6">
+                        <label for="picDirChooser" class="form-label">Picture Folder</label>
+                        <button class="btn btn-primary" id="picDirChooser">Choose</button>
+                        <span id="picDir"></span>
+                        <div class="form-text">Include jpg picture files from this directory.</div>
+                    </div>
+                </div>
+                <div class="row p-2">
                     <div class="col-4">
                         <label for="shuffleSeed" class="form-label">Shuffle Seed</label>
                         <input type="number" class="form-input" id="shuffleSeed">
@@ -43,20 +57,6 @@
                         <label for="replaceWith" class="form-label">With this</label>
                         <input type="text" class="form-input" id="replaceWith">
                         <div class="form-text">Replace part of the file name with this.</div>
-                    </div>
-                </div>
-                <div class="row p-2">
-                    <div class="col-6">
-                        <label for="projectChooser" class="form-label">Project File</label>
-                        <button class="btn btn-primary" id="projectChooser">Choose</button>
-                        <span id="dbFileName"></span>
-                        <div class="form-text">The project file for this group of pictures. </div>
-                    </div>
-                    <div class="col-6">
-                        <label for="picDirChooser" class="form-label">Picture Folder</label>
-                        <button class="btn btn-primary" id="picDirChooser">Choose</button>
-                        <span id="picDir"></span>
-                        <div class="form-text">Include jpg picture files from this directory.</div>
                     </div>
                 </div>
                 <div class="row p-2 m-2 border">

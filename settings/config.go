@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -55,12 +56,24 @@ func readConfig(a *App) (err error) {
 	alternateIniFileName, e := main.Value(ALTERNATE_INIFILENAME_KEY)
 	if e == nil {
 		iniFile, e = os.Open(alternateIniFileName)
+		if e != nil {
+			return fmt.Errorf("failed to read the alternate ini file - %q", e)
+		}
+		log.Printf("Using alternate ini file %v\n", alternateIniFileName)
+		iniData, e := io.ReadAll(iniFile)
 		if e == nil {
-			log.Printf("Using alternate ini file %v\n", alternateIniFileName)
-			ini, e = inifile.NewIniConfigFromFile(iniFile)
-			if e != nil {
-				return fmt.Errorf("failed to read the alternate ini file - %q", e)
+			e = json.Unmarshal(iniData, &a.settings)
+			if e != nil || a.settings.DbFileName == "" {
+				log.Println("Not a saved settings file, reading as a .ini")
+				iniFile, _ = os.Open(alternateIniFileName)
+			} else {
+				log.Println("Using saved settings")
+				return nil
 			}
+		}
+		ini, e = inifile.NewIniConfigFromFile(iniFile)
+		if e != nil {
+			return fmt.Errorf("failed to intrepret the alternate ini - %q", e)
 		}
 	}
 
@@ -163,7 +176,7 @@ func (a *App) SaveSettings(settings Settings) {
 	runtime.LogInfof(a.ctx, "Update settings: %v", settings)
 	a.settings = settings
 	newSettings, _ := json.Marshal(a.settings)
-	ioutil.WriteFile("pfnss.json", newSettings, 0644)
+	ioutil.WriteFile("pfnss.local", newSettings, 0644)
 	a.configure()
 }
 
