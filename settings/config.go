@@ -142,7 +142,7 @@ func (a *App) GetProjectFile() (fileName string) {
 	if err != nil {
 		runtime.LogError(a.ctx, "Couldn't get current directory")
 	}
-	fileName, err = runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+	fileName, err = runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
 		Title:            "Project File",
 		DefaultDirectory: cwd,
 		DefaultFilename:  "pfnss.db",

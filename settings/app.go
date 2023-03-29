@@ -63,20 +63,34 @@ func (a *App) configure() {
 	a.files = []FileItem{}
 	rows, err := db.Query("select id, name from files order by id;")
 	if err != nil {
-		log.Fatalf("Failed to query files from %v", a.settings.DbFileName)
-	}
+		log.Printf("Failed to query files from %v - initializing", a.settings.DbFileName)
+		db.Exec(`
+		CREATE TABLE files (id integer primary key autoincrement, name);
+		CREATE TABLE log(ts,file_id integer not null);
+		CREATE TABLE marks(ts,file_id integer not null,mark);
+		`)
+		tx, err := db.Begin()
+		if err != nil {
+			log.Fatalf("starting rebuild %v", err)
+		}
+		a.rebuildData(db, a.settings.PicDir)
+		err = tx.Commit()
+		if err != nil {
+			log.Fatalf("committing rebuild %v", err)
+		}
+	} else {
+		for rows.Next() {
+			fi := FileItem{}
+			if err = rows.Scan(&fi.Id, &fi.Name); err != nil {
+				log.Fatalf("Failed to scan fileName %v", err)
+			}
 
-	for rows.Next() {
-		fi := FileItem{}
-		if err = rows.Scan(&fi.Id, &fi.Name); err != nil {
-			log.Fatalf("Failed to scan fileName %v", err)
+			a.files = append(a.files, fi)
 		}
 
-		a.files = append(a.files, fi)
-	}
-
-	if err = rows.Err(); err != nil {
-		log.Fatalf("Could not use result set")
+		if err = rows.Err(); err != nil {
+			log.Fatalf("Could not use result set")
+		}
 	}
 
 	if a.settings.ReplacePattern == "" {
