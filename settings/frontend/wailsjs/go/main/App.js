@@ -18,8 +18,8 @@ export function GetSettings() {
   return window['go']['main']['App']['GetSettings']();
 }
 
-export function LoadImage(arg1) {
-  return window['go']['main']['App']['LoadImage'](arg1);
+export function LoadImage() {
+  return window['go']['main']['App']['LoadImage']();
 }
 
 export function SaveSettings(arg1) {

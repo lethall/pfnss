@@ -198,10 +198,11 @@ func (a *App) conditionFileName(item FileItem) FileItem {
 	return newItem
 }
 
-func (a *App) LoadImage(imageIndex int) FileItem {
+func (a *App) LoadImage() FileItem {
 	if len(a.files) == 0 {
 		return FileItem{}
 	}
+	imageIndex := a.settings.CurrentIndex
 	if imageIndex < 0 {
 		imageIndex = len(a.files) - 1
 	}
