@@ -37,3 +37,16 @@ func (a *App) rebuildData(db *sql.DB, dirName string) {
 		}
 	}
 }
+
+func (a *App) findLastShown(db *sql.DB) (fileId int) {
+	rows, err := db.Query("select file_id from log order by ts desc limit 1")
+	if err != nil {
+		runtime.LogDebugf(a.ctx, "failed to find last %v", err)
+		return 0
+	}
+	for rows.Next() {
+		rows.Scan(&fileId)
+	}
+	runtime.LogDebugf(a.ctx, "last seen: %v", fileId)
+	return
+}

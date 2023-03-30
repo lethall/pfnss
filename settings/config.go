@@ -26,6 +26,7 @@ type Settings struct {
 	ShowId         bool   `json:"showId"`
 	ShowSeq        bool   `json:"showSeq"`
 	ShowName       bool   `json:"showName"`
+	CurrentIndex   int    `json:"currentIndex"`
 }
 
 // Names of the config keys

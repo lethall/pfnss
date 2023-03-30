@@ -13,7 +13,7 @@ declare global {
         doKey: (ev: KeyboardEvent) => void;
         announce: (s: string) => void;
         getImage: (n: number) => void;
-        configure: () => void;
+        configure: (showForm: boolean, nextOp: any) => void;
         saveSettings: () => void;
         getProjectFile: (ev: MouseEvent) => void;
         getPicDir: (ev: MouseEvent) => void;
@@ -28,16 +28,41 @@ window.loadImage = () => {
     try {
         LoadImage(seq)
             .then((fileItem) => {
+                if (fileItem.name == "") {
+                    window.configure(true, null);
+                    return;
+                }
                 seq = fileItem.ix;
                 const spans = (document.getElementById('photo-name') as HTMLDivElement).children;
                 let id = spans?.item(0); // aka #accounce
                 if (id) id.innerHTML = '';
                 id = spans?.item(1);
-                if (id) id.innerHTML = `${fileItem.id}`;
+                if (id) {
+                    if (window.settings.showId) {
+                        id.classList.remove("d-none");
+                        id.innerHTML = `${fileItem.id}`;
+                    } else {
+                        id.classList.add("d-none");
+                    }
+                }
                 id = spans?.item(2);
-                if (id) id.innerHTML = `${fileItem.name}`;
+                if (id) {
+                    if (window.settings.showName) {
+                        id.classList.remove("d-none");
+                        id.innerHTML = `${fileItem.name}`;
+                    } else {
+                        id.classList.add("d-none");
+                    }
+                }
                 id = spans?.item(3);
-                if (id) id.innerHTML = `${seq}`;
+                if (id) {
+                    if (window.settings.showSeq) {
+                        id.classList.remove("d-none");
+                        id.innerHTML = `${seq}`;
+                    } else {
+                        id.classList.add("d-none");
+                    }
+                }
                 (document.getElementById('viewer') as HTMLDivElement).setAttribute("style", "background-image: url('" + fileItem.name + "')");
                 seq++
             })
@@ -66,7 +91,7 @@ window.announce = function (s: string) {
     (document.getElementById('announce') as HTMLSpanElement).innerHTML = s;
 }
 
-window.configure = () => {
+window.configure = (showForm: boolean, nextOp: any) => {
     GetSettings()
         .then((currentSettings) => {
             window.settings = currentSettings;
@@ -84,8 +109,14 @@ window.configure = () => {
             (document.getElementById("findTo") as HTMLInputElement).value = window.settings.findTo;
 
             window.changeFindType(window.settings.findType);
-            document.getElementById('viewer')?.classList.add("d-none");
-            document.getElementById('configure')?.classList.remove("d-none");
+            seq = window.settings.currentIndex;
+
+            if (showForm) {
+                document.getElementById('viewer')?.classList.add("d-none");
+                document.getElementById('configure')?.classList.remove("d-none");
+            }
+
+            if (nextOp) nextOp();
         }
         ).catch((err) => {
             console.error(err);
@@ -182,9 +213,7 @@ document.getElementById('findType')?.addEventListener("change", (ev) => { window
 document.addEventListener("keyup", window.doKey);
 EventsOn("loadimage", (d: number) => { window.getImage(d); })
 EventsOn("announce", (s: string) => { window.announce(s); })
-EventsOn("configure", () => { window.configure(); })
+EventsOn("configure", () => { window.configure(true, null); })
 
 let seq = 0;
-
-window.loadImage();
-// window.configure();
+window.configure(false, window.loadImage);

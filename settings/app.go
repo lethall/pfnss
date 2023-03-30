@@ -6,6 +6,7 @@ import (
 	_ "image/jpeg"
 	"log"
 	"math/rand"
+	"os"
 	"regexp"
 	"time"
 
@@ -15,15 +16,14 @@ import (
 
 // App struct
 type App struct {
-	ctx          context.Context
-	settings     Settings
-	conditioner  regexp.Regexp
-	files        []FileItem
-	currentIndex int
-	imageTicker  *time.Ticker
-	viewDelay    time.Duration
-	paused       bool
-	absPrefix    string
+	ctx         context.Context
+	settings    Settings
+	conditioner regexp.Regexp
+	files       []FileItem
+	imageTicker *time.Ticker
+	viewDelay   time.Duration
+	paused      bool
+	absPrefix   string
 }
 
 type FileItem struct {
@@ -34,7 +34,13 @@ type FileItem struct {
 
 // NewApp creates a new App application struct
 func NewApp() *App {
-	return &App{}
+	app := &App{}
+	workDir, _ := os.Getwd()
+	app.settings.DbFileName = workDir + string(os.PathSeparator) + "pfnss.db"
+	app.settings.PicDir = workDir
+	app.settings.ShuffleSeed = 31056
+	app.settings.SwitchSeconds = 10
+	return app
 }
 
 // startup is called when the app starts. The context is saved
@@ -42,9 +48,10 @@ func NewApp() *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	if err := readConfig(a); err != nil {
-		log.Fatalf("failed to read ini file %v\n", err)
+		log.Printf("failed to read ini file %v\n", err)
+	} else {
+		a.configure()
 	}
-	a.configure()
 }
 
 func (a *App) configure() {
@@ -105,7 +112,14 @@ func (a *App) configure() {
 	rand.Shuffle(len(a.files), func(i int, j int) {
 		a.files[i], a.files[j] = a.files[j], a.files[i]
 	})
-	a.currentIndex = 0
+	lastShown := a.findLastShown(db)
+	a.settings.CurrentIndex = 0
+	for ix, item := range a.files {
+		item.Ix = ix
+		if item.Id == lastShown {
+			a.settings.CurrentIndex = ix
+		}
+	}
 
 	if a.imageTicker != nil {
 		a.imageTicker.Stop()
@@ -118,15 +132,15 @@ func (a *App) configure() {
 		for {
 			select {
 			case <-a.imageTicker.C:
-				a.currentIndex++
-				runtime.EventsEmit(a.ctx, "loadimage", a.currentIndex)
+				a.settings.CurrentIndex++
+				runtime.EventsEmit(a.ctx, "loadimage", a.settings.CurrentIndex)
 			}
 		}
 	}()
 }
 
 func (a *App) mark(action string) {
-	fileId := a.files[a.currentIndex].Id
+	fileId := a.files[a.settings.CurrentIndex].Id
 	db, err := sql.Open("sqlite", a.settings.DbFileName)
 	if err != nil {
 		log.Fatalf("Failed to read DB")
@@ -148,7 +162,7 @@ func (a *App) mark(action string) {
 }
 
 func (a *App) logView() {
-	fileId := a.files[a.currentIndex].Id
+	fileId := a.files[a.settings.CurrentIndex].Id
 	db, err := sql.Open("sqlite", a.settings.DbFileName)
 	if err != nil {
 		log.Fatalf("Failed to read DB")
@@ -172,7 +186,7 @@ func (a *App) logView() {
 func (a *App) conditionFileName(item FileItem) FileItem {
 	newItem := FileItem{
 		Id: item.Id,
-		Ix: a.currentIndex,
+		Ix: a.settings.CurrentIndex,
 	}
 
 	s := item.Name
@@ -194,7 +208,7 @@ func (a *App) LoadImage(imageIndex int) FileItem {
 	if imageIndex >= len(a.files) {
 		imageIndex = 0
 	}
-	a.currentIndex = imageIndex
+	a.settings.CurrentIndex = imageIndex
 	a.logView()
 	return a.conditionFileName(a.files[imageIndex])
 }
@@ -211,13 +225,13 @@ func (a *App) DoKey(key string) {
 			runtime.WindowFullscreen(a.ctx)
 		}
 	case "n", "ArrowRight", "ArrowDown":
-		a.currentIndex++
+		a.settings.CurrentIndex++
 		a.imageTicker.Reset(a.viewDelay)
-		runtime.EventsEmit(a.ctx, "loadimage", a.currentIndex)
+		runtime.EventsEmit(a.ctx, "loadimage", a.settings.CurrentIndex)
 	case "p", "ArrowLeft", "ArrowUp":
-		a.currentIndex--
+		a.settings.CurrentIndex--
 		a.imageTicker.Reset(a.viewDelay)
-		runtime.EventsEmit(a.ctx, "loadimage", a.currentIndex)
+		runtime.EventsEmit(a.ctx, "loadimage", a.settings.CurrentIndex)
 	case "s", "d", "e":
 		a.mark(key)
 		action := ""
@@ -241,10 +255,14 @@ func (a *App) DoKey(key string) {
 		}
 	case "!":
 		a.paused = false
-		a.imageTicker.Reset(a.viewDelay)
+		if a.imageTicker != nil {
+			a.imageTicker.Reset(a.viewDelay)
+		}
 		runtime.EventsEmit(a.ctx, "announce", "")
 	case "c":
-		a.imageTicker.Stop()
+		if a.imageTicker != nil {
+			a.imageTicker.Stop()
+		}
 		a.paused = true
 		runtime.EventsEmit(a.ctx, "configure")
 	default:

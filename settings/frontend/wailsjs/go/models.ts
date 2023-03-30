@@ -29,6 +29,7 @@ export namespace main {
 	    showId: boolean;
 	    showSeq: boolean;
 	    showName: boolean;
+	    currentIndex: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new Settings(source);
@@ -48,6 +49,7 @@ export namespace main {
 	        this.showId = source["showId"];
 	        this.showSeq = source["showSeq"];
 	        this.showName = source["showName"];
+	        this.currentIndex = source["currentIndex"];
 	    }
 	}
 
