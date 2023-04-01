@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"os"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -193,7 +194,11 @@ func (a *App) conditionFileName(item FileItem) FileItem {
 	if a.conditioner.String() != "" {
 		s = a.conditioner.ReplaceAllString(item.Name, a.settings.ReplaceWith)
 	}
-	newItem.Name = a.absPrefix + s
+	requestedFilename := a.absPrefix + s
+	if len(requestedFilename) > 1 && string(requestedFilename[1]) == ":" {
+		requestedFilename = requestedFilename[2:]
+	}
+	newItem.Name = strings.ReplaceAll(requestedFilename, `\`, "/")
 
 	return newItem
 }
