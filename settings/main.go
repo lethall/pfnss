@@ -24,7 +24,6 @@ func NewFileLoader() *FileLoader {
 
 func (h *FileLoader) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	var err error
-	// requestedFilename := strings.TrimPrefix(req.URL.Path, "/")
 	requestedFilename := req.URL.Path
 	println("Requesting file:", requestedFilename)
 	fileData, err := os.ReadFile(requestedFilename)

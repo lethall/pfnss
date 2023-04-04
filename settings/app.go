@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	_ "image/jpeg"
 	"log"
 	"math/rand"
@@ -56,50 +55,7 @@ func (a *App) startup(ctx context.Context) {
 }
 
 func (a *App) configure() {
-	db, err := sql.Open("sqlite", a.settings.DbFileName)
-	if err != nil {
-		log.Fatalf("Failed to read DB")
-	}
-
-	defer func() {
-		err = db.Close()
-		if err != nil {
-			log.Fatalf("Could not close DB")
-		}
-	}()
-
-	a.files = []FileItem{}
-	rows, err := db.Query("select id, name from files order by id;")
-	if err != nil {
-		log.Printf("Failed to query files from %v - initializing", a.settings.DbFileName)
-		db.Exec(`
-		CREATE TABLE files (id integer primary key autoincrement, name);
-		CREATE TABLE log(ts,file_id integer not null);
-		CREATE TABLE marks(ts,file_id integer not null,mark);
-		`)
-		tx, err := db.Begin()
-		if err != nil {
-			log.Fatalf("starting rebuild %v", err)
-		}
-		a.rebuildData(db, a.settings.PicDir)
-		err = tx.Commit()
-		if err != nil {
-			log.Fatalf("committing rebuild %v", err)
-		}
-	} else {
-		for rows.Next() {
-			fi := FileItem{}
-			if err = rows.Scan(&fi.Id, &fi.Name); err != nil {
-				log.Fatalf("Failed to scan fileName %v", err)
-			}
-
-			a.files = append(a.files, fi)
-		}
-
-		if err = rows.Err(); err != nil {
-			log.Fatalf("Could not use result set")
-		}
-	}
+	a.selectFiles()
 
 	if a.settings.ReplacePattern == "" {
 		a.absPrefix = a.settings.PicDir + "/"
@@ -108,12 +64,15 @@ func (a *App) configure() {
 		a.conditioner = *regexp.MustCompile(a.settings.ReplacePattern)
 	}
 
-	rand.Seed(a.settings.ShuffleSeed)
 	runtime.LogInfof(a.ctx, "Shuffle seed: %d", a.settings.ShuffleSeed)
-	rand.Shuffle(len(a.files), func(i int, j int) {
-		a.files[i], a.files[j] = a.files[j], a.files[i]
-	})
-	lastShown := a.findLastShown(db)
+	if a.settings.ShuffleSeed > 0 {
+		rand.Seed(a.settings.ShuffleSeed)
+		rand.Shuffle(len(a.files), func(i int, j int) {
+			a.files[i], a.files[j] = a.files[j], a.files[i]
+		})
+	}
+
+	lastShown := a.findLastShown()
 	a.settings.CurrentIndex = 0
 	for ix, item := range a.files {
 		item.Ix = ix
@@ -138,50 +97,6 @@ func (a *App) configure() {
 			}
 		}
 	}()
-}
-
-func (a *App) mark(action string) {
-	fileId := a.files[a.settings.CurrentIndex].Id
-	db, err := sql.Open("sqlite", a.settings.DbFileName)
-	if err != nil {
-		log.Fatalf("Failed to read DB")
-	}
-
-	defer func() {
-		err = db.Close()
-		if err != nil {
-			log.Fatalf("Could not close DB")
-		}
-	}()
-
-	_, err = db.Exec("insert into marks (ts, file_id, mark) values (?,?,?)",
-		time.Now().Format("2006-01-02T15:04:05.999"), fileId, action)
-	if err != nil {
-		log.Fatalf("Failed to insert mark %s for %d", action, fileId)
-	}
-
-}
-
-func (a *App) logView() {
-	fileId := a.files[a.settings.CurrentIndex].Id
-	db, err := sql.Open("sqlite", a.settings.DbFileName)
-	if err != nil {
-		log.Fatalf("Failed to read DB")
-	}
-
-	defer func() {
-		err = db.Close()
-		if err != nil {
-			log.Fatalf("Could not close DB")
-		}
-	}()
-
-	_, err = db.Exec("insert into log (ts, file_id) values (?,?)",
-		time.Now().Format("2006-01-02T15:04:05.999"), fileId)
-	if err != nil {
-		log.Fatalf("Failed to insert log for %d", fileId)
-	}
-
 }
 
 func (a *App) conditionFileName(item FileItem) FileItem {

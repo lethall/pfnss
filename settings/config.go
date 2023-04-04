@@ -122,22 +122,6 @@ func readConfig(a *App) (err error) {
 	return nil
 }
 
-/*
-; alternate configuration... if this is not provided, use this one
-iniFileName = ../pfnss.ini
-
-[data]
-dbFileName = ../pfnss.db
-
-[saver]
-absolutePathPrefix = /
-; conditionerRegexp = ""
-; conditionerReplacement = ""
-switchSeconds = 2
-*/
-// func writeConfig() {
-// }
-
 func (a *App) GetProjectFile() (fileName string) {
 	cwd, err := os.Getwd()
 	if err != nil {
