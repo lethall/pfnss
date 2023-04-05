@@ -81,17 +81,9 @@ func (a *App) selectFiles() {
 		return
 	}
 
-	if a.settings.FindType == "byIdZZZ" {
-		startId, err := strconv.Atoi(a.settings.FindFrom)
-		if err != nil {
-			startId = 1
-			a.settings.FindFrom = strconv.Itoa(startId)
-		}
-		endId, err := strconv.Atoi(a.settings.FindTo)
-		if err != nil {
-			endId = 1
-			a.settings.FindTo = strconv.Itoa(endId)
-		}
+	if a.settings.FindType == "byId" {
+		rows.Close()
+		startId, endId := a.getFindRange()
 		rows, err = db.Query("select id, name from files where id >= ? and id <= ? order by id;", startId, endId)
 		if err != nil {
 			runtime.LogFatalf(a.ctx, "failed to query byId = %v", err)
@@ -110,6 +102,24 @@ func (a *App) selectFiles() {
 	if err = rows.Err(); err != nil {
 		runtime.LogFatalf(a.ctx, "could not use result set")
 	}
+}
+
+func (a *App) getFindRange() (int, int) {
+	startId, err := strconv.Atoi(a.settings.FindFrom)
+	if err != nil {
+		startId = 1
+		a.settings.FindFrom = strconv.Itoa(startId)
+	}
+	endId, err := strconv.Atoi(a.settings.FindTo)
+	if err != nil {
+		endId = 1
+		a.settings.FindTo = strconv.Itoa(endId)
+	}
+	if startId > endId {
+		startId, endId = endId, startId
+		a.settings.FindFrom, a.settings.FindTo = a.settings.FindTo, a.settings.FindFrom
+	}
+	return startId, endId
 }
 
 func (a *App) findLastShown() (fileId int) {

@@ -72,6 +72,11 @@ func (a *App) configure() {
 		})
 	}
 
+	if a.settings.FindType == "bySequence" {
+		seqStart, seqEnd := a.getFindRange()
+		a.files = a.files[seqStart : seqEnd+1]
+	}
+
 	lastShown := a.findLastShown()
 	a.settings.CurrentIndex = 0
 	for ix, item := range a.files {
