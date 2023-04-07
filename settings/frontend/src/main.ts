@@ -169,13 +169,29 @@ const applyClass = (items: HTMLCollection, classNme: string, add: Boolean) => {
 }
 
 const changeFindType = (findType: string) => {
+    const findFrom = document.getElementById('findFrom') as HTMLInputElement;
+    const findTo = document.getElementById('findTo') as HTMLInputElement;
+    let findByFromLabel = "";
+    let findByToLabel = "";
     if (findType == "byAll") {
-        (document.getElementById('findFrom') as HTMLInputElement).disabled = true;
-        (document.getElementById('findTo') as HTMLInputElement).disabled = true;
+        findFrom.disabled = true;
+        findTo.disabled = true;
         applyClass(document.getElementsByClassName('finders'), "d-none", true);
     } else {
-        (document.getElementById('findFrom') as HTMLInputElement).disabled = false;
-        (document.getElementById('findTo') as HTMLInputElement).disabled = false;
+        if (findType == "byShown") {
+            findFrom.type = findTo.type = "datetime-local";
+            findByFromLabel = "earliest time shown";
+            findByToLabel = "latest time shown";
+        } else {
+            findFrom.type = findTo.type = "number";
+            let typeLabel = (findType == "byId") ? "file ID number" : "sequence number";
+            findByFromLabel = `lowest ${typeLabel}`;
+            findByToLabel = `highest ${typeLabel}`;
+        }
+        (findFrom.nextElementSibling as HTMLDivElement).innerHTML = `Choose the ${findByFromLabel}`;
+        (findTo.nextElementSibling as HTMLDivElement).innerHTML = `Choose the ${findByToLabel}`;
+        findFrom.disabled = false;
+        findTo.disabled = false;
         applyClass(document.getElementsByClassName('finders'), "d-none", false);
     }
 }

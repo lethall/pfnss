@@ -88,6 +88,16 @@ func (a *App) selectFiles() {
 		if err != nil {
 			runtime.LogFatalf(a.ctx, "failed to query byId = %v", err)
 		}
+	} else if a.settings.FindType == "byShown" {
+		rows.Close()
+		startTs, endTs := a.getFindTsRange()
+		rows, err = db.Query(`select distinct f.id, f.name
+		from files f join log g on f.id = g.file_id
+		where g.ts >= ? and g.ts <= ?
+		order by g.ts;`, startTs, endTs)
+		if err != nil {
+			runtime.LogFatalf(a.ctx, "failed to query byShown = %v", err)
+		}
 	}
 
 	for rows.Next() {
@@ -120,6 +130,16 @@ func (a *App) getFindRange() (int, int) {
 		a.settings.FindFrom, a.settings.FindTo = a.settings.FindTo, a.settings.FindFrom
 	}
 	return startId, endId
+}
+
+func (a *App) getFindTsRange() (string, string) {
+	startTs := a.settings.FindFrom
+	endTs := a.settings.FindTo
+	if startTs > endTs {
+		startTs, endTs = endTs, startTs
+		a.settings.FindFrom, a.settings.FindTo = a.settings.FindTo, a.settings.FindFrom
+	}
+	return startTs, endTs
 }
 
 func (a *App) findLastShown() (fileId int) {
