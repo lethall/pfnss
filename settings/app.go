@@ -30,6 +30,7 @@ type FileItem struct {
 	Id   int    `json:"id"`
 	Name string `json:"name"`
 	Ix   int    `json:"ix"`
+	Mark string `json:"mark"`
 }
 
 // NewApp creates a new App application struct
@@ -106,8 +107,9 @@ func (a *App) configure() {
 
 func (a *App) conditionFileName(item FileItem) FileItem {
 	newItem := FileItem{
-		Id: item.Id,
-		Ix: a.settings.CurrentIndex,
+		Id:   item.Id,
+		Ix:   a.settings.CurrentIndex,
+		Mark: actionFromKey(a.lastFileMark(item.Id)),
 	}
 
 	s := item.Name
@@ -160,16 +162,7 @@ func (a *App) DoKey(key string) {
 		runtime.EventsEmit(a.ctx, "loadimage", a.settings.CurrentIndex)
 	case "s", "d", "e":
 		a.mark(key)
-		action := ""
-		switch key {
-		case "s":
-			action = "Save"
-		case "d":
-			action = "Delete"
-		case "e":
-			action = "Edit"
-		}
-		runtime.EventsEmit(a.ctx, "announce", action)
+		runtime.EventsEmit(a.ctx, "announce", actionFromKey(key))
 	case " ", "Enter":
 		a.paused = !a.paused
 		if a.paused {
@@ -191,7 +184,28 @@ func (a *App) DoKey(key string) {
 		}
 		a.paused = true
 		runtime.EventsEmit(a.ctx, "configure")
+	case "m":
+		a.moveMarkedFiles()
 	default:
 		runtime.LogDebugf(a.ctx, "Key: %v", key)
 	}
+}
+
+func (a *App) moveMarkedFiles() {
+
+}
+
+func actionFromKey(key string) (action string) {
+	if key == "" {
+		return
+	}
+	switch key[0] {
+	case 's':
+		action = "Save"
+	case 'd':
+		action = "Delete"
+	case 'e':
+		action = "Edit"
+	}
+	return
 }

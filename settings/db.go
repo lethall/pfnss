@@ -36,7 +36,7 @@ func (a *App) rebuildData(db *sql.DB, dirName string) {
 			if strings.HasSuffix(strings.ToLower(fileName), ".jpg") {
 				fileName = shortDirName + string(os.PathSeparator) + fileName
 				runtime.LogInfo(a.ctx, "Inserting "+fileName)
-				a.files = append(a.files, FileItem{len(a.files), fileName, 0})
+				a.files = append(a.files, FileItem{len(a.files), fileName, 0, ""})
 				db.Exec("insert into files (name) values (?)", fileName)
 			}
 		}
@@ -48,6 +48,25 @@ func (a *App) closeDb(db *sql.DB) {
 	if err != nil {
 		runtime.LogFatalf(a.ctx, "Could not close DB")
 	}
+}
+
+func (a *App) lastFileMark(fileId int) (mark string) {
+	db := a.openDb()
+	defer a.closeDb(db)
+
+	rows, err := db.Query("select mark from marks where file_id = ? order by ts desc limit 1;", fileId)
+	if err != nil {
+		runtime.LogInfof(a.ctx, "Failed query marks from %v", a.settings.DbFileName)
+		return
+	}
+
+	for rows.Next() {
+		if err = rows.Scan(&mark); err != nil {
+			runtime.LogFatalf(a.ctx, "failed to scan mark for %d - %v", fileId, err)
+		}
+	}
+
+	return
 }
 
 func (a *App) selectFiles() {

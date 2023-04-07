@@ -19,7 +19,7 @@ const loadImage = () => {
                 }
                 const spans = (document.getElementById('photo-name') as HTMLDivElement).children;
                 let id = spans?.item(0); // aka #accounce
-                if (id) id.innerHTML = '';
+                if (id) id.innerHTML = fileItem.mark;
                 id = spans?.item(1);
                 if (id) {
                     if (settings.showId) {

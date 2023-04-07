@@ -4,6 +4,7 @@ export namespace main {
 	    id: number;
 	    name: string;
 	    ix: number;
+	    mark: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new FileItem(source);
@@ -14,6 +15,7 @@ export namespace main {
 	        this.id = source["id"];
 	        this.name = source["name"];
 	        this.ix = source["ix"];
+	        this.mark = source["mark"];
 	    }
 	}
 	export class Settings {
