@@ -21,23 +21,18 @@ func (a *App) openDb() *sql.DB {
 func (a *App) rebuildData(db *sql.DB, dirName string) {
 	entries, err := os.ReadDir(dirName)
 	if err != nil {
-		runtime.LogInfo(a.ctx, "Nothing in directory "+dirName)
 		return
 	}
 	shortDirName := dirName[len(a.settings.PicDir):]
 	if shortDirName != "" {
 		shortDirName = shortDirName[1:]
 	}
-	runtime.LogInfof(a.ctx, "%d entries in %s", len(entries), dirName)
 	for _, entry := range entries {
 		fileName := entry.Name()
-		runtime.LogInfo(a.ctx, "Entry: "+fileName)
 		if entry.IsDir() {
 			fileName = dirName + string(os.PathSeparator) + fileName
-			runtime.LogInfo(a.ctx, "Searching "+fileName)
 			a.rebuildData(db, fileName)
 		} else {
-			runtime.LogInfo(a.ctx, "Considering "+fileName)
 			if strings.HasSuffix(strings.ToLower(fileName), ".jpg") {
 				fileName = shortDirName + string(os.PathSeparator) + fileName
 				runtime.LogInfo(a.ctx, "Inserting "+fileName)
@@ -48,8 +43,7 @@ func (a *App) rebuildData(db *sql.DB, dirName string) {
 	}
 }
 
-func (a *App) closeDb(db *sql.DB, where string) {
-	runtime.LogDebugf(a.ctx, "closing db in %s", where)
+func (a *App) closeDb(db *sql.DB) {
 	err := db.Close()
 	if err != nil {
 		runtime.LogFatalf(a.ctx, "Could not close DB")
@@ -58,7 +52,7 @@ func (a *App) closeDb(db *sql.DB, where string) {
 
 func (a *App) selectFiles() {
 	db := a.openDb()
-	defer a.closeDb(db, "select")
+	defer a.closeDb(db)
 
 	a.files = []FileItem{}
 	rows, err := db.Query("select id, name from files order by id;")
@@ -139,12 +133,12 @@ func (a *App) getFindTsRange() (string, string) {
 		startTs, endTs = endTs, startTs
 		a.settings.FindFrom, a.settings.FindTo = a.settings.FindTo, a.settings.FindFrom
 	}
-	return startTs, endTs
+	return startTs + ":00.000", endTs + ":59.999"
 }
 
 func (a *App) findLastShown() (fileId int) {
 	db := a.openDb()
-	defer a.closeDb(db, "lasst shown")
+	defer a.closeDb(db)
 
 	rows, err := db.Query("select file_id from log order by ts desc limit 1")
 	if err != nil {
@@ -161,7 +155,7 @@ func (a *App) findLastShown() (fileId int) {
 func (a *App) mark(action string) {
 	fileId := a.files[a.settings.CurrentIndex].Id
 	db := a.openDb()
-	defer a.closeDb(db, "mark")
+	defer a.closeDb(db)
 
 	_, err := db.Exec("insert into marks (ts, file_id, mark) values (?,?,?)",
 		time.Now().Format("2006-01-02T15:04:05.999"), fileId, action)
@@ -174,7 +168,7 @@ func (a *App) mark(action string) {
 func (a *App) logView() {
 	fileId := a.files[a.settings.CurrentIndex].Id
 	db := a.openDb()
-	defer a.closeDb(db, "log")
+	defer a.closeDb(db)
 
 	_, err := db.Exec("insert into log (ts, file_id) values (?,?)",
 		time.Now().Format("2006-01-02T15:04:05.999"), fileId)
