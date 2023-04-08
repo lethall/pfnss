@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	_ "image/jpeg"
-	"log"
-	"math/rand"
 	"os"
 	"regexp"
 	"strings"
@@ -16,14 +14,15 @@ import (
 
 // App struct
 type App struct {
-	ctx         context.Context
-	settings    Settings
-	conditioner regexp.Regexp
-	files       []FileItem
-	imageTicker *time.Ticker
-	viewDelay   time.Duration
-	paused      bool
-	absPrefix   string
+	ctx           context.Context
+	settings      Settings
+	conditioner   regexp.Regexp
+	files         []FileItem
+	imageTicker   *time.Ticker
+	viewDelay     time.Duration
+	paused        bool
+	absPrefix     string
+	onlyConfigure bool
 }
 
 type FileItem struct {
@@ -48,61 +47,16 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
-	if err := readConfig(a); err != nil {
-		log.Printf("failed to read ini file %v\n", err)
+	if err := a.readConfig(); err != nil {
+		runtime.LogErrorf(a.ctx, "failed to read ini file %v\n", err)
 	} else {
-		a.configure()
-	}
-}
-
-func (a *App) configure() {
-	a.selectFiles()
-
-	if a.settings.ReplacePattern == "" {
-		a.absPrefix = a.settings.PicDir + "/"
-	} else {
-		a.absPrefix = ""
-		a.conditioner = *regexp.MustCompile(a.settings.ReplacePattern)
-	}
-
-	runtime.LogInfof(a.ctx, "Shuffle seed: %d", a.settings.ShuffleSeed)
-	if a.settings.ShuffleSeed > 0 {
-		rand.Seed(a.settings.ShuffleSeed)
-		rand.Shuffle(len(a.files), func(i int, j int) {
-			a.files[i], a.files[j] = a.files[j], a.files[i]
-		})
-	}
-
-	if a.settings.FindType == "bySequence" {
-		seqStart, seqEnd := a.getFindRange()
-		a.files = a.files[seqStart : seqEnd+1]
-	}
-
-	lastShown := a.findLastShown()
-	a.settings.CurrentIndex = 0
-	for ix, item := range a.files {
-		item.Ix = ix
-		if item.Id == lastShown {
-			a.settings.CurrentIndex = ix
+		if len(os.Args) > 1 && strings.ToLower(os.Args[1]) == "/c" {
+			runtime.LogDebug(a.ctx, "requesting configure")
+			a.onlyConfigure = true
+		} else {
+			a.configure()
 		}
 	}
-
-	if a.imageTicker != nil {
-		a.imageTicker.Stop()
-	}
-
-	a.viewDelay = time.Duration(a.settings.SwitchSeconds) * time.Second
-	a.paused = false
-	a.imageTicker = time.NewTicker(a.viewDelay)
-	go func() {
-		for {
-			select {
-			case <-a.imageTicker.C:
-				a.settings.CurrentIndex++
-				runtime.EventsEmit(a.ctx, "loadimage", a.settings.CurrentIndex)
-			}
-		}
-	}()
 }
 
 func (a *App) conditionFileName(item FileItem) FileItem {

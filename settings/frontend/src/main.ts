@@ -105,19 +105,21 @@ const view = () => {
     DoKey("!")
 }
 
-const saveSettings = () => {
-    settings.shuffleSeed = (document.getElementById("shuffleSeed") as HTMLInputElement).valueAsNumber;
-    settings.replacePattern = (document.getElementById("replacePattern") as HTMLInputElement).value;
-    settings.replaceWith = (document.getElementById("replaceWith") as HTMLInputElement).value;
-    settings.switchSeconds = (document.getElementById("showTimer") as HTMLInputElement).valueAsNumber;
-    settings.dbFileName = (document.getElementById("dbFileName") as HTMLSpanElement).innerHTML;
-    settings.picDir = (document.getElementById("picDir") as HTMLSpanElement).innerHTML;
-    settings.showId = (document.getElementById("showId") as HTMLInputElement).checked;
-    settings.showSeq = (document.getElementById("showSeq") as HTMLInputElement).checked;
-    settings.showName = (document.getElementById("showName") as HTMLInputElement).checked;
-    settings.findType = (document.getElementById("findType") as HTMLSelectElement).value;
-    settings.findFrom = (document.getElementById("findFrom") as HTMLInputElement).value;
-    settings.findTo = (document.getElementById("findTo") as HTMLInputElement).value;
+const saveSettings = (doSave: boolean) => {
+    if (doSave) {
+        settings.shuffleSeed = (document.getElementById("shuffleSeed") as HTMLInputElement).valueAsNumber;
+        settings.replacePattern = (document.getElementById("replacePattern") as HTMLInputElement).value;
+        settings.replaceWith = (document.getElementById("replaceWith") as HTMLInputElement).value;
+        settings.switchSeconds = (document.getElementById("showTimer") as HTMLInputElement).valueAsNumber;
+        settings.dbFileName = (document.getElementById("dbFileName") as HTMLSpanElement).innerHTML;
+        settings.picDir = (document.getElementById("picDir") as HTMLSpanElement).innerHTML;
+        settings.showId = (document.getElementById("showId") as HTMLInputElement).checked;
+        settings.showSeq = (document.getElementById("showSeq") as HTMLInputElement).checked;
+        settings.showName = (document.getElementById("showName") as HTMLInputElement).checked;
+        settings.findType = (document.getElementById("findType") as HTMLSelectElement).value;
+        settings.findFrom = (document.getElementById("findFrom") as HTMLInputElement).value;
+        settings.findTo = (document.getElementById("findTo") as HTMLInputElement).value;
+    }
 
     SaveSettings(settings);
     view();
@@ -197,8 +199,8 @@ const changeFindType = (findType: string) => {
 }
 
 document.getElementById('viewer')?.addEventListener("click", loadImage);
-document.getElementById('cancel')?.addEventListener("click", view);
-document.getElementById('save')?.addEventListener("click", saveSettings);
+document.getElementById('cancel')?.addEventListener("click", () => { saveSettings(false); });
+document.getElementById('save')?.addEventListener("click", () => { saveSettings(true); });
 document.getElementById('projectChooser')?.addEventListener("click", (ev) => { getProjectFile(ev); });
 document.getElementById('picDirChooser')?.addEventListener("click", (ev) => { getPicDir(ev); });
 document.getElementById('findType')?.addEventListener("change", (ev) => { changeFindType((ev.target as HTMLSelectElement).value); });

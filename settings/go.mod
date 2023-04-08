@@ -3,7 +3,6 @@ module javafoundry.com/pfnss-settings
 go 1.18
 
 require (
-	github.com/graniticio/inifile v0.0.0-20210325083046-86e94fdc8f99
 	github.com/wailsapp/wails/v2 v2.4.1
 	modernc.org/sqlite v1.20.4
 )

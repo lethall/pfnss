@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
+	"math/rand"
 	"os"
 	"regexp"
+	"time"
 
-	"github.com/graniticio/inifile"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -29,96 +29,70 @@ type Settings struct {
 	CurrentIndex   int    `json:"currentIndex"`
 }
 
-// Names of the config keys
-const ALTERNATE_INIFILENAME_KEY = "iniFileName"
-const ABSOLUTE_PATH_PREFIX_KEY = "absolutePathPrefix"
-const CONDITIONER_REGEXP_KEY = "conditionerRegexp"
-const CONDITIONER_REPLACEMENT_KEY = "conditionerReplacement"
-const SHUFFLE_SEED_KEY = "shuffleSeed"
-const SWITCH_SEC_KEY = "switchSeconds"
-const DB_FILE_NAME_KEY = "dbFileName"
+func (a *App) configure() {
+	a.selectFiles()
 
-func readConfig(a *App) (err error) {
-	iniFile, e := os.Open("pfnss.ini")
-	if e != nil {
-		return fmt.Errorf(fmt.Sprintf("could not open the ini file - %q", e))
+	if a.settings.ReplacePattern == "" {
+		a.absPrefix = a.settings.PicDir + "/"
+	} else {
+		a.absPrefix = ""
+		a.conditioner = *regexp.MustCompile(a.settings.ReplacePattern)
 	}
 
-	ini, e := inifile.NewIniConfigFromFile(iniFile)
-	if e != nil {
-		return fmt.Errorf("failed to read the ini file - %q", e)
+	runtime.LogInfof(a.ctx, "Shuffle seed: %d", a.settings.ShuffleSeed)
+	if a.settings.ShuffleSeed > 0 {
+		rand.Seed(a.settings.ShuffleSeed)
+		rand.Shuffle(len(a.files), func(i int, j int) {
+			a.files[i], a.files[j] = a.files[j], a.files[i]
+		})
 	}
 
-	main, e := ini.Section("")
-	if e != nil {
-		return fmt.Errorf("failed to read the main section - %q", e)
+	if a.settings.FindType == "bySequence" {
+		seqStart, seqEnd := a.getFindRange()
+		a.files = a.files[seqStart : seqEnd+1]
 	}
 
-	alternateIniFileName, e := main.Value(ALTERNATE_INIFILENAME_KEY)
-	if e == nil {
-		iniFile, e = os.Open(alternateIniFileName)
-		if e != nil {
-			return fmt.Errorf("failed to read the alternate ini file - %q", e)
+	lastShown := a.findLastShown()
+	a.settings.CurrentIndex = 0
+	for ix, item := range a.files {
+		item.Ix = ix
+		if item.Id == lastShown {
+			a.settings.CurrentIndex = ix
 		}
-		log.Printf("Using alternate ini file %v\n", alternateIniFileName)
-		iniData, e := io.ReadAll(iniFile)
-		if e == nil {
-			e = json.Unmarshal(iniData, &a.settings)
-			if e != nil || a.settings.DbFileName == "" {
-				log.Println("Not a saved settings file, reading as a .ini")
-				iniFile, _ = os.Open(alternateIniFileName)
-			} else {
-				log.Println("Using saved settings")
-				return nil
+	}
+
+	if a.imageTicker != nil {
+		a.imageTicker.Stop()
+	}
+
+	a.viewDelay = time.Duration(a.settings.SwitchSeconds) * time.Second
+	a.paused = false
+	a.imageTicker = time.NewTicker(a.viewDelay)
+	go func() {
+		for {
+			select {
+			case <-a.imageTicker.C:
+				a.settings.CurrentIndex++
+				runtime.EventsEmit(a.ctx, "loadimage", a.settings.CurrentIndex)
 			}
 		}
-		ini, e = inifile.NewIniConfigFromFile(iniFile)
-		if e != nil {
-			return fmt.Errorf("failed to intrepret the alternate ini - %q", e)
+	}()
+}
+
+func (a *App) readConfig() (err error) {
+	iniFile, e := os.Open("pfnss.local")
+	if e != nil {
+		return fmt.Errorf("failed to read the alternate ini file - %q", e)
+	}
+	// log.Printf("Using alternate ini file %v\n", alternateIniFileName)
+	iniData, e := io.ReadAll(iniFile)
+	if e == nil {
+		e = json.Unmarshal(iniData, &a.settings)
+		if e != nil || a.settings.DbFileName == "" {
+			return fmt.Errorf("failed to load settings - %q", e)
 		}
 	}
-
-	saver, e := ini.Section("saver")
-	if e != nil {
-		return fmt.Errorf("failed to read the saver section - %q", e)
-	}
-
-	a.absPrefix, _ = saver.Value(ABSOLUTE_PATH_PREFIX_KEY)
-	a.settings.ReplacePattern = ""
-	a.settings.ReplacePattern, _ = saver.Value(CONDITIONER_REGEXP_KEY)
-	c, e := regexp.Compile(a.settings.ReplacePattern)
-	if e == nil {
-		a.conditioner = *c
-	}
-
-	a.settings.ReplaceWith, _ = saver.Value(CONDITIONER_REPLACEMENT_KEY)
-
-	a.settings.ShuffleSeed, e = saver.ValueAsInt64(SHUFFLE_SEED_KEY)
-	if e != nil {
-		a.settings.ShuffleSeed = 1234
-	}
-
-	n, e := saver.ValueAsInt64(SWITCH_SEC_KEY)
-	if e != nil {
-		a.settings.SwitchSeconds = 20
-	}
-	a.settings.SwitchSeconds = int(n)
-
-	data, e := ini.Section("data")
-	if e != nil {
-		return fmt.Errorf("failed to read the data section - %q", e)
-	}
-	a.settings.DbFileName, e = data.Value(DB_FILE_NAME_KEY)
-	if e != nil {
-		return fmt.Errorf("failed to read dbFileName - %q", e)
-	}
-
-	a.settings.FindType = "byAll"
-
-	a.settings.ShowId = true
-	a.settings.ShowSeq = true
-	a.settings.ShowName = true
-
+	runtime.LogInfo(a.ctx, "Using saved settings")
 	return nil
 }
 
@@ -162,6 +136,9 @@ func (a *App) SaveSettings(settings Settings) {
 	a.settings = settings
 	newSettings, _ := json.Marshal(a.settings)
 	ioutil.WriteFile("pfnss.local", newSettings, 0644)
+	if a.onlyConfigure {
+		runtime.Quit(a.ctx)
+	}
 	a.configure()
 }
 
