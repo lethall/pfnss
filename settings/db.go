@@ -29,6 +29,9 @@ func (a *App) rebuildData(db *sql.DB, dirName string) {
 	}
 	for _, entry := range entries {
 		fileName := entry.Name()
+		if fileName == saveFiles || fileName == deleteFiles {
+			continue
+		}
 		if entry.IsDir() {
 			fileName = dirName + string(os.PathSeparator) + fileName
 			a.rebuildData(db, fileName)
@@ -67,6 +70,36 @@ func (a *App) lastFileMark(fileId int) (mark string) {
 	}
 
 	return
+}
+
+func (a *App) findMarkedFiles() (markedFiles []FileItem) {
+	db := a.openDb()
+	defer a.closeDb(db)
+
+	rows, err := db.Query("select m.file_id, m.mark, f.name from marks m join files f on (f.id = m.file_id) order by m.ts desc;")
+	if err != nil {
+		runtime.LogInfof(a.ctx, "Failed query marks from %v", a.settings.DbFileName)
+		return
+	}
+
+	for rows.Next() {
+		fi := FileItem{}
+		if err = rows.Scan(&fi.Id, &fi.Mark, &fi.Name); err != nil {
+			runtime.LogFatalf(a.ctx, "failed to scan marked file - %v", err)
+		}
+		markedFiles = append(markedFiles, fi)
+	}
+
+	return
+}
+
+func (a *App) clearMarks() {
+	db := a.openDb()
+	defer a.closeDb(db)
+
+	db.Exec("delete from files where id in (select distinct file_id from marks);")
+	db.Exec("delete from marks;")
+	runtime.LogInfo(a.ctx, "Cleared marks")
 }
 
 func (a *App) selectFiles() {

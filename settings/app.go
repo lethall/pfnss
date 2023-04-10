@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	_ "image/jpeg"
 	"os"
 	"regexp"
@@ -11,6 +12,9 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	_ "modernc.org/sqlite"
 )
+
+const deleteFiles = string(os.PathSeparator) + "PFNSS_Delete"
+const saveFiles = string(os.PathSeparator) + "PFNSS_Save"
 
 // App struct
 type App struct {
@@ -59,24 +63,24 @@ func (a *App) startup(ctx context.Context) {
 	}
 }
 
+func (a *App) fixName(name string) string {
+	if a.conditioner.String() != "" {
+		name = a.conditioner.ReplaceAllString(name, a.settings.ReplaceWith)
+	}
+	requestedFilename := a.absPrefix + name
+	if len(requestedFilename) > 1 && string(requestedFilename[1]) == ":" {
+		requestedFilename = requestedFilename[2:]
+	}
+	return strings.ReplaceAll(requestedFilename, `\`, "/")
+}
+
 func (a *App) conditionFileName(item FileItem) FileItem {
-	newItem := FileItem{
+	return FileItem{
+		Name: a.fixName(item.Name),
 		Id:   item.Id,
 		Ix:   a.settings.CurrentIndex,
 		Mark: actionFromKey(a.lastFileMark(item.Id)),
 	}
-
-	s := item.Name
-	if a.conditioner.String() != "" {
-		s = a.conditioner.ReplaceAllString(item.Name, a.settings.ReplaceWith)
-	}
-	requestedFilename := a.absPrefix + s
-	if len(requestedFilename) > 1 && string(requestedFilename[1]) == ":" {
-		requestedFilename = requestedFilename[2:]
-	}
-	newItem.Name = strings.ReplaceAll(requestedFilename, `\`, "/")
-
-	return newItem
 }
 
 func (a *App) LoadImage() FileItem {
@@ -146,7 +150,35 @@ func (a *App) DoKey(key string) {
 }
 
 func (a *App) moveMarkedFiles() {
-
+	markedFiles := a.findMarkedFiles()
+	if len(markedFiles) > 0 {
+		os.MkdirAll(a.settings.PicDir+deleteFiles, 0777)
+		os.MkdirAll(a.settings.PicDir+saveFiles, 0777)
+	}
+	doClear := true
+	for _, fi := range markedFiles {
+		var destDir string
+		switch fi.Mark[0] {
+		case 'd', 'D':
+			destDir = deleteFiles
+		case 's', 'S':
+			destDir = saveFiles
+		default:
+			runtime.LogErrorf(a.ctx, "%s is marked with %s", fi.Name, fi.Mark)
+		}
+		if destDir != "" {
+			name := a.fixName(fi.Name)
+			destName := fmt.Sprintf("%s%s%cid_%d.jpg", a.settings.PicDir, destDir, os.PathSeparator, fi.Id)
+			runtime.LogInfof(a.ctx, "Moving %s to %s", name, destName)
+			if err := os.Rename(name, destName); err != nil {
+				runtime.LogErrorf(a.ctx, "could not move - %v", err)
+				doClear = false
+			}
+		}
+	}
+	if doClear {
+		a.clearMarks()
+	}
 }
 
 func actionFromKey(key string) (action string) {
