@@ -209,12 +209,17 @@ func (a *App) mark(action string) {
 	db := a.openDb()
 	defer a.closeDb(db)
 
-	_, err := db.Exec("insert into marks (ts, file_id, mark) values (?,?,?)",
-		time.Now().Format("2006-01-02T15:04:05.999"), fileId, action)
+	_, err := db.Exec("delete from marks where file_id = ?)", fileId)
 	if err != nil {
-		runtime.LogFatalf(a.ctx, "Failed to insert mark %s for %d - %v", action, fileId, err)
+		runtime.LogErrorf(a.ctx, "Failed to remove mark %s for %d - %v", action, fileId, err)
 	}
-
+	if action != "r" {
+		_, err = db.Exec("insert into marks (ts, file_id, mark) values (?,?,?)",
+			time.Now().Format("2006-01-02T15:04:05.999"), fileId, action)
+		if err != nil {
+			runtime.LogFatalf(a.ctx, "Failed to insert mark %s for %d - %v", action, fileId, err)
+		}
+	}
 }
 
 func (a *App) logView() {

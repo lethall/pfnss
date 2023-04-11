@@ -118,7 +118,7 @@ func (a *App) DoKey(key string) {
 		a.settings.CurrentIndex--
 		a.imageTicker.Reset(a.viewDelay)
 		runtime.EventsEmit(a.ctx, "loadimage", a.settings.CurrentIndex)
-	case "s", "d", "e":
+	case "s", "d", "e", "r":
 		a.mark(key)
 		runtime.EventsEmit(a.ctx, "announce", actionFromKey(key))
 	case " ", "Enter":
@@ -155,7 +155,7 @@ func (a *App) moveMarkedFiles() {
 		os.MkdirAll(a.settings.PicDir+deleteFiles, 0777)
 		os.MkdirAll(a.settings.PicDir+saveFiles, 0777)
 	}
-	doClear := true
+	doRebuld := false
 	for _, fi := range markedFiles {
 		var destDir string
 		switch fi.Mark[0] {
@@ -172,12 +172,14 @@ func (a *App) moveMarkedFiles() {
 			runtime.LogInfof(a.ctx, "Moving %s to %s", name, destName)
 			if err := os.Rename(name, destName); err != nil {
 				runtime.LogErrorf(a.ctx, "could not move - %v", err)
-				doClear = false
+			} else {
+				doRebuld = true
 			}
 		}
 	}
-	if doClear {
+	if doRebuld {
 		a.clearMarks()
+		a.selectFiles()
 	}
 }
 
@@ -192,6 +194,8 @@ func actionFromKey(key string) (action string) {
 		action = "Delete"
 	case 'e':
 		action = "Edit"
+	case 'r':
+		action = ""
 	}
 	return
 }

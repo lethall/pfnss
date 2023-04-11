@@ -55,15 +55,13 @@ const loadImage = () => {
     } catch (err) {
         console.error(err);
     }
-};
+}
 
 const doKey = function (ev: KeyboardEvent) {
     if (document.getElementById('viewer')?.classList.contains("d-none")) return;
     ev.preventDefault();
     DoKey(ev.key);
 }
-
-
 
 const announce = function (s: string) {
     (document.getElementById('announce') as HTMLSpanElement).innerHTML = s;
@@ -205,8 +203,8 @@ document.getElementById('projectChooser')?.addEventListener("click", (ev) => { g
 document.getElementById('picDirChooser')?.addEventListener("click", (ev) => { getPicDir(ev); });
 document.getElementById('findType')?.addEventListener("change", (ev) => { changeFindType((ev.target as HTMLSelectElement).value); });
 document.addEventListener("keyup", doKey);
-EventsOn("loadimage", () => { loadImage(); })
-EventsOn("announce", (s: string) => { announce(s); })
-EventsOn("configure", () => { configure(true); })
+EventsOn("loadimage", () => { loadImage(); });
+EventsOn("announce", (s: string) => { announce(s); });
+EventsOn("configure", () => { configure(true); });
 
 configure(false).then(() => { loadImage(); });
