@@ -80,7 +80,7 @@ func (a *App) configure() {
 }
 
 func (a *App) readConfig() (err error) {
-	iniFile, e := os.Open("pfnss.local")
+	iniFile, e := os.Open(a.settingsFile)
 	if e != nil {
 		return fmt.Errorf("failed to read the alternate ini file - %q", e)
 	}
@@ -135,7 +135,7 @@ func (a *App) SaveSettings(settings Settings) {
 	runtime.LogInfof(a.ctx, "Update settings: %v", settings)
 	a.settings = settings
 	newSettings, _ := json.Marshal(a.settings)
-	ioutil.WriteFile("pfnss.local", newSettings, 0644)
+	ioutil.WriteFile(a.settingsFile, newSettings, 0644)
 	if a.onlyConfigure {
 		runtime.Quit(a.ctx)
 	}

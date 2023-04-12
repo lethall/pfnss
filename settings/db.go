@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -33,11 +34,11 @@ func (a *App) rebuildData(db *sql.DB, dirName string) {
 			continue
 		}
 		if entry.IsDir() {
-			fileName = dirName + string(os.PathSeparator) + fileName
+			fileName = path.Join(dirName, fileName)
 			a.rebuildData(db, fileName)
 		} else {
 			if strings.HasSuffix(strings.ToLower(fileName), ".jpg") {
-				fileName = shortDirName + string(os.PathSeparator) + fileName
+				fileName = path.Join(shortDirName, fileName)
 				runtime.LogInfo(a.ctx, "Inserting "+fileName)
 				a.files = append(a.files, FileItem{len(a.files), fileName, 0, ""})
 				db.Exec("insert into files (name) values (?)", fileName)

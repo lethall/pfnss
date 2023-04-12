@@ -5,6 +5,7 @@ import (
 	"fmt"
 	_ "image/jpeg"
 	"os"
+	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -27,6 +28,7 @@ type App struct {
 	paused        bool
 	absPrefix     string
 	onlyConfigure bool
+	settingsFile  string
 }
 
 type FileItem struct {
@@ -39,11 +41,12 @@ type FileItem struct {
 // NewApp creates a new App application struct
 func NewApp() *App {
 	app := &App{}
-	workDir, _ := os.Getwd()
-	app.settings.DbFileName = workDir + string(os.PathSeparator) + "pfnss.db"
+	workDir := path.Dir(os.Args[0])
+	app.settings.DbFileName = path.Join(workDir, "pfnss.db")
 	app.settings.PicDir = workDir
 	app.settings.ShuffleSeed = 31056
 	app.settings.SwitchSeconds = 10
+	app.settingsFile = path.Join(workDir, "pfnss.local")
 	return app
 }
 
