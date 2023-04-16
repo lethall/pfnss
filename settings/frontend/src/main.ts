@@ -47,7 +47,9 @@ const loadImage = () => {
                         id.classList.add("d-none");
                     }
                 }
-                (document.getElementById('viewer') as HTMLDivElement).setAttribute("style", "background-image: url('" + fileItem.name + "')");
+                const viewer = document.getElementById('viewer') as HTMLDivElement;
+                viewer.setAttribute("style", "background-image: url('" + fileItem.name + "')");
+                viewer.focus();
             })
             .catch((err) => {
                 console.error(err);
@@ -57,11 +59,17 @@ const loadImage = () => {
     }
 }
 
+const keyCatcher = document.getElementById('keycatcher') as HTMLInputElement;
+
 const doKey = function (ev: KeyboardEvent) {
     if (document.getElementById('viewer')?.classList.contains("d-none")) return;
+    keyCatcher.value = "";
     ev.preventDefault();
     DoKey(ev.key);
 }
+
+keyCatcher.focus();
+keyCatcher.addEventListener("keyup", doKey);
 
 const announce = function (s: string) {
     (document.getElementById('announce') as HTMLSpanElement).innerHTML = s;
@@ -202,7 +210,6 @@ document.getElementById('save')?.addEventListener("click", () => { saveSettings(
 document.getElementById('projectChooser')?.addEventListener("click", (ev) => { getProjectFile(ev); });
 document.getElementById('picDirChooser')?.addEventListener("click", (ev) => { getPicDir(ev); });
 document.getElementById('findType')?.addEventListener("change", (ev) => { changeFindType((ev.target as HTMLSelectElement).value); });
-document.addEventListener("keyup", doKey);
 EventsOn("loadimage", () => { loadImage(); });
 EventsOn("announce", (s: string) => { announce(s); });
 EventsOn("configure", () => { configure(true); });
