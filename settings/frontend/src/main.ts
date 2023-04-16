@@ -9,6 +9,8 @@ import { main } from '../wailsjs/go/models';
 
 let settings: main.Settings;
 
+const keyCatcher = document.getElementById('keycatcher') as HTMLInputElement;
+
 const loadImage = () => {
     try {
         LoadImage()
@@ -49,7 +51,7 @@ const loadImage = () => {
                 }
                 const viewer = document.getElementById('viewer') as HTMLDivElement;
                 viewer.setAttribute("style", "background-image: url('" + fileItem.name + "')");
-                viewer.focus();
+                keyCatcher.focus();
             })
             .catch((err) => {
                 console.error(err);
@@ -58,8 +60,6 @@ const loadImage = () => {
         console.error(err);
     }
 }
-
-const keyCatcher = document.getElementById('keycatcher') as HTMLInputElement;
 
 const doKey = function (ev: KeyboardEvent) {
     if (document.getElementById('viewer')?.classList.contains("d-none")) return;
