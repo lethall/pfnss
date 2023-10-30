@@ -42,7 +42,7 @@ func main() {
 	// Create application with options
 	err := wails.Run(&options.App{
 		Title:            "settings",
-		WindowStartState: options.Fullscreen,
+		WindowStartState: options.Normal,
 		Frameless:        true,
 		AlwaysOnTop:      true,
 		AssetServer: &assetserver.Options{

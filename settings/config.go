@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"regexp"
@@ -131,12 +130,12 @@ func (a *App) GetPicDir() (picDir string) {
 	return
 }
 
-func (a *App) SaveSettings(settings Settings) {
+func (a *App) SaveSettings(settings Settings, doSave bool) {
 	runtime.LogInfof(a.ctx, "Update settings: %v", settings)
 	a.settings = settings
 	newSettings, _ := json.Marshal(a.settings)
-	ioutil.WriteFile(a.settingsFile, newSettings, 0644)
-	if a.onlyConfigure {
+	os.WriteFile(a.settingsFile, newSettings, 0644)
+	if !doSave || a.onlyConfigure {
 		runtime.Quit(a.ctx)
 	}
 	a.configure()

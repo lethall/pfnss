@@ -127,7 +127,7 @@ const saveSettings = (doSave: boolean) => {
         settings.findTo = (document.getElementById("findTo") as HTMLInputElement).value;
     }
 
-    SaveSettings(settings);
+    SaveSettings(settings, doSave);
     view();
 }
 

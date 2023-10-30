@@ -12,4 +12,4 @@ export function GetSettings():Promise<main.Settings>;
 
 export function LoadImage():Promise<main.FileItem>;
 
-export function SaveSettings(arg1:main.Settings):Promise<void>;
+export function SaveSettings(arg1:main.Settings,arg2:boolean):Promise<void>;

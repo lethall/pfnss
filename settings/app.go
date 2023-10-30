@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/wailsapp/wails/v2/pkg/logger"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	_ "modernc.org/sqlite"
 )
@@ -54,6 +55,7 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	runtime.LogSetLogLevel(ctx, logger.DEBUG)
 	if err := a.readConfig(); err != nil {
 		runtime.LogErrorf(a.ctx, "failed to read ini file %v\n", err)
 	} else {
