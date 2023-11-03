@@ -14,6 +14,8 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
+const Version = "1.2"
+
 type FileLoader struct {
 	http.Handler
 }
@@ -37,7 +39,7 @@ func (h *FileLoader) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 
 func main() {
 	// Create an instance of the app structure
-	app := NewApp()
+	app := NewApp(Version)
 
 	// Create application with options
 	err := wails.Run(&options.App{

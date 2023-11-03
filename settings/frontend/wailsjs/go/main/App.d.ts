@@ -10,6 +10,8 @@ export function GetProjectFile():Promise<string>;
 
 export function GetSettings():Promise<main.Settings>;
 
+export function GetVersion():Promise<string>;
+
 export function LoadImage():Promise<main.FileItem>;
 
 export function SaveSettings(arg1:main.Settings,arg2:boolean):Promise<void>;

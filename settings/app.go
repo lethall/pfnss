@@ -15,8 +15,8 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const deleteFiles = string(os.PathSeparator) + "PFNSS_Delete"
-const saveFiles = string(os.PathSeparator) + "PFNSS_Save"
+const deleteFiles = "PFNSS_Delete"
+const saveFiles = "PFNSS_Save"
 
 // App struct
 type App struct {
@@ -30,6 +30,7 @@ type App struct {
 	absPrefix     string
 	onlyConfigure bool
 	settingsFile  string
+	version       string
 }
 
 type FileItem struct {
@@ -40,8 +41,9 @@ type FileItem struct {
 }
 
 // NewApp creates a new App application struct
-func NewApp() *App {
+func NewApp(version string) *App {
 	app := &App{}
+	app.version = version
 	workDir := path.Dir(os.Args[0])
 	app.settings.DbFileName = path.Join(workDir, "pfnss.db")
 	app.settings.PicDir = workDir
@@ -157,17 +159,17 @@ func (a *App) DoKey(key string) {
 func (a *App) moveMarkedFiles() {
 	markedFiles := a.findMarkedFiles()
 	if len(markedFiles) > 0 {
-		os.MkdirAll(a.settings.PicDir+deleteFiles, 0777)
-		os.MkdirAll(a.settings.PicDir+saveFiles, 0777)
+		os.MkdirAll(a.settings.PicDir+string(os.PathSeparator)+deleteFiles, 0777)
+		os.MkdirAll(a.settings.PicDir+string(os.PathSeparator)+saveFiles, 0777)
 	}
 	doRebuld := false
 	for _, fi := range markedFiles {
 		var destDir string
 		switch fi.Mark[0] {
 		case 'd', 'D':
-			destDir = deleteFiles
+			destDir = string(os.PathSeparator) + deleteFiles
 		case 's', 'S':
-			destDir = saveFiles
+			destDir = string(os.PathSeparator) + saveFiles
 		default:
 			runtime.LogErrorf(a.ctx, "%s is marked with %s", fi.Name, fi.Mark)
 		}

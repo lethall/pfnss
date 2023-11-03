@@ -3,12 +3,11 @@ import './app.css';
 import './bootstrap.min.css';
 import './bootstrap.bundle.min.js';
 
-import { LoadImage, DoKey, SaveSettings, GetSettings, GetProjectFile, GetPicDir } from '../wailsjs/go/main/App';
+import { LoadImage, DoKey, SaveSettings, GetSettings, GetProjectFile, GetPicDir, GetVersion } from '../wailsjs/go/main/App';
 import { EventsOn } from '../wailsjs/runtime';
 import { main } from '../wailsjs/go/models';
 
 let settings: main.Settings;
-
 const keyCatcher = document.getElementById('keycatcher') as HTMLInputElement;
 
 const loadImage = () => {
@@ -213,5 +212,13 @@ document.getElementById('findType')?.addEventListener("change", (ev) => { change
 EventsOn("loadimage", () => { loadImage(); });
 EventsOn("announce", (s: string) => { announce(s); });
 EventsOn("configure", () => { configure(true); });
+
+
+GetVersion().then((version) => {
+    (document.getElementById('version') as HTMLSpanElement).textContent = version;
+})
+.catch((err) => {
+    console.error(err);
+});
 
 configure(false).then(() => { loadImage(); });

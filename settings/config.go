@@ -144,3 +144,7 @@ func (a *App) SaveSettings(settings Settings, doSave bool) {
 func (a *App) GetSettings() (settings Settings) {
 	return a.settings
 }
+
+func (a *App) GetVersion() string {
+	return a.version
+}

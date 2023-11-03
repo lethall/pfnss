@@ -30,7 +30,8 @@ func (a *App) rebuildData(db *sql.DB, dirName string) {
 	}
 	for _, entry := range entries {
 		fileName := entry.Name()
-		if fileName == saveFiles || fileName == deleteFiles {
+		if strings.Contains(fileName, saveFiles) ||
+			strings.Contains(fileName, deleteFiles) {
 			continue
 		}
 		if entry.IsDir() {
