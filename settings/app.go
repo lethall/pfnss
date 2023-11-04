@@ -161,21 +161,25 @@ func (a *App) moveMarkedFiles() {
 	if len(markedFiles) > 0 {
 		os.MkdirAll(a.settings.PicDir+string(os.PathSeparator)+deleteFiles, 0777)
 		os.MkdirAll(a.settings.PicDir+string(os.PathSeparator)+saveFiles, 0777)
+	} else {
+		return
 	}
+	serialTimestamp := time.Now().Unix()
 	doRebuld := false
 	for _, fi := range markedFiles {
 		var destDir string
 		switch fi.Mark[0] {
 		case 'd', 'D':
-			destDir = string(os.PathSeparator) + deleteFiles
+			destDir = deleteFiles
 		case 's', 'S':
-			destDir = string(os.PathSeparator) + saveFiles
+			destDir = saveFiles
 		default:
 			runtime.LogErrorf(a.ctx, "%s is marked with %s", fi.Name, fi.Mark)
 		}
 		if destDir != "" {
 			name := a.fixName(fi.Name)
-			destName := fmt.Sprintf("%s%s%cid_%d.jpg", a.settings.PicDir, destDir, os.PathSeparator, fi.Id)
+			destName := fmt.Sprintf("%s%c%s%c%d_%d.jpg",
+				a.settings.PicDir, os.PathSeparator, destDir, os.PathSeparator, serialTimestamp, fi.Id)
 			runtime.LogInfof(a.ctx, "Moving %s to %s", name, destName)
 			if err := os.Rename(name, destName); err != nil {
 				runtime.LogErrorf(a.ctx, "could not move - %v", err)
