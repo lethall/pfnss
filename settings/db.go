@@ -24,6 +24,7 @@ func (a *App) rebuildData(db *sql.DB, dirName string) {
 	if err != nil {
 		return
 	}
+	runtime.LogInfof(a.ctx, "Scanning %d entries", len(entries))
 	shortDirName := dirName[len(a.settings.PicDir):]
 	if shortDirName != "" {
 		shortDirName = shortDirName[1:]
