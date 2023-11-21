@@ -12,12 +12,12 @@ int main(int argc, char **argv) {
     char *s = buf;
     while (*s) {
         if (*s == '\n') {
-            *s++ = ' ';
-            *s = '\0';
             break;
         }
         ++s;
     }
+    *s++ = ' ';
+    *s = '\0';
     --argc;
     ++argv;
     while (argc--) {
