@@ -1,13 +1,11 @@
 from datetime import datetime
 import configparser
 import json
-import os
 from random import shuffle, seed
 import sqlite3
 import sys
 import time
-from tkinter import Canvas, Tk, Event
-from tkinter import ttk
+from tkinter import Canvas, Tk
 
 from PIL import Image, ImageTk
 import requests
@@ -25,7 +23,7 @@ class PictureFileNameSaver:
     file_ids = None
     last_seen = None
     current_id = None
-    current_idx = None
+    current_idx = 0
     paused = False
     looping = False
     reverse = False
@@ -74,7 +72,10 @@ class PictureFileNameSaver:
         self.screen_ratio = self.screen_width / self.screen_height
 
     def get_file_id(self):
-        self.current_id = self.file_ids[self.current_idx]
+        try:
+            self.current_id = self.file_ids[self.current_idx]
+        except:
+            self.current_id = 1
         return self.current_id
 
     def display(self, fname):
