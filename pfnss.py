@@ -214,14 +214,13 @@ if __name__ == '__main__':
     scan_to_start = True
     skip_count = 0
     app.looping = True
-    while True:
+    while app.looping:
         app.current_idx = 0
         file_count = len(app.file_ids)
         while app.current_idx < file_count:
             if app.terminate or not app.looping:
-                print("Not looping")
                 app.end_loop()
-                exit(0)
+                break
             if scan_to_start:
                 last_seen = app.last_seen
                 idx = 0
