@@ -48,7 +48,7 @@ class PictureFileNameSaver:
         self.db_file_name = config["data"].get("dbFileName", "c:/work/git/pfnss/pfnss.db")
         self.file_ids = [i for i in range(1, int(config["data"].get("maxFileId", "10")))]
         seed(int(config["server"].get("seed", "31056")))
-        self.log_url = config["server"].get("logUrl", "http://192.168.1.189:8800/pfnss")
+        self.log_url = config["server"].get("logUrl", "")
         self.max_skip_count = int(config["server"].get("maxSkipCount", "5"))
         self.switch_secs = int(config["saver"].get("switchSeconds", "30"))
         self.prefix = config["saver"].get("prefix", "")
@@ -131,13 +131,13 @@ class PictureFileNameSaver:
 
     def end_loop(self, ev=None):
         if ev:
-            print(f"Ending pfnss {ev.type}")
+            print(f"Ending event type {ev.type}")
         self.looping = False
         self.terminate = True
         try:
             self.root.destroy()
         except:
-            print("Ending")
+            print("Done")
 
     def keyboard_event(self, ev):
         if ev.keycode in [37, 38] or ev.char == 'p':
@@ -241,7 +241,7 @@ if __name__ == '__main__':
                 ts = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
                 db.execute("insert into log (ts, file_id) values (?,?)", (ts, current_id))
                 db.commit()
-            if skip_count < app.max_skip_count:
+            if app.log_url and skip_count < app.max_skip_count:
                 try:
                     o = json.dumps({"ts": ts, "file_no": current_id, "name": fname})
                     requests.post(app.log_url, headers={"Content-Type": "application/json"}, data=o)
