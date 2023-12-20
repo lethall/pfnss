@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 import configparser
 import json
 from random import shuffle, seed
@@ -40,6 +40,7 @@ class PictureFileNameSaver:
     screen_width = None
     screen_height = None
     screen_ratio = None
+    prefix = None
 
     def __init__(self):
         self.config = config = configparser.ConfigParser()
@@ -50,6 +51,7 @@ class PictureFileNameSaver:
         self.log_url = config["server"].get("logUrl", "http://192.168.1.189:8800/pfnss")
         self.max_skip_count = int(config["server"].get("maxSkipCount", "5"))
         self.switch_secs = int(config["saver"].get("switchSeconds", "30"))
+        self.prefix = config["saver"].get("prefix", "")
         self.do_hide = True if config["saver"].get("doHide", "True") == "True" else False
 
         shuffle(self.file_ids)
@@ -79,7 +81,7 @@ class PictureFileNameSaver:
         return self.current_id
 
     def display(self, fname):
-        jpg = Image.open(fname)
+        jpg = Image.open(self.prefix + fname)
         w, h = jpg.size
         img_ratio = w / h
         screen_height = self.screen_height
@@ -157,7 +159,7 @@ class PictureFileNameSaver:
 
     def save(self, mark="save"):
         with sqlite3.connect(self.db_file_name) as db:
-            ts = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
+            ts = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
             db.execute("insert into marks (ts, file_id, mark) values (?,?,?)", (ts, self.current_id, mark))
             db.commit()
 
@@ -230,7 +232,7 @@ if __name__ == '__main__':
                 if (".jpg" not in fname) and (".jpeg" not in fname):
                     app.next()
                     continue
-                ts = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
+                ts = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
                 db.execute("insert into log (ts, file_id) values (?,?)", (ts, current_id))
                 db.commit()
             if skip_count < app.max_skip_count:
