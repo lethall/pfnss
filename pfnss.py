@@ -134,7 +134,10 @@ class PictureFileNameSaver:
             print(f"Ending pfnss {ev.type}")
         self.looping = False
         self.terminate = True
-        self.root.destroy()
+        try:
+            self.root.destroy()
+        except:
+            print("Ending")
 
     def keyboard_event(self, ev):
         if ev.keycode in [37, 38] or ev.char == 'p':
@@ -210,10 +213,15 @@ if __name__ == '__main__':
 
     scan_to_start = True
     skip_count = 0
+    app.looping = True
     while True:
         app.current_idx = 0
         file_count = len(app.file_ids)
-        while app.looping and app.current_idx < file_count:
+        while app.current_idx < file_count:
+            if app.terminate or not app.looping:
+                print("Not looping")
+                app.end_loop()
+                exit(0)
             if scan_to_start:
                 last_seen = app.last_seen
                 idx = 0
@@ -251,4 +259,3 @@ if __name__ == '__main__':
                 app.reverse = False
             else:
                 app.current_idx += 1
-    app.end_loop()
