@@ -110,7 +110,7 @@ class PictureFileNameSaver:
             for i in range(self.switch_secs * 10):
                 self.root.update()
                 if self.terminate:
-                    exit()
+                    return
                 time.sleep(0.1)
                 if showing_id != self.get_file_id():
                     loop = False
@@ -129,11 +129,10 @@ class PictureFileNameSaver:
                     c_paused = canvas.create_text(0, 0, text="PAUSED", anchor="nw", fill="red", font="Courier 12")
         canvas.delete(c_t1, c_t2, c_t3, c_t4, c_i)
 
-    def end_looping(self):
+    def end_loop(self, ev=None):
+        if ev:
+            print(f"Ending pfnss {ev.type}")
         self.looping = False
-
-    def end_loop(self, ev):
-        print(f"Ending pfnss {ev.type}")
         self.terminate = True
         self.root.destroy()
 
@@ -214,7 +213,7 @@ if __name__ == '__main__':
     while True:
         app.current_idx = 0
         file_count = len(app.file_ids)
-        while app.current_idx < file_count:
+        while app.looping and app.current_idx < file_count:
             if scan_to_start:
                 last_seen = app.last_seen
                 idx = 0
@@ -252,3 +251,4 @@ if __name__ == '__main__':
                 app.reverse = False
             else:
                 app.current_idx += 1
+    app.end_loop()
