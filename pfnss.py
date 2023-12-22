@@ -18,7 +18,6 @@ except:
     print("No win32 support")
 
 class PictureFileNameSaver:
-    config = None
     db_file_name = None
     file_ids = None
     last_seen = None
@@ -27,12 +26,10 @@ class PictureFileNameSaver:
     paused = False
     looping = False
     reverse = False
-    display_timer = None
 
     log_url = None
     max_skip_count = None
     switch_secs = None
-    do_hide = None
     terminate = False
 
     root = None
@@ -42,17 +39,21 @@ class PictureFileNameSaver:
     screen_ratio = None
     prefix = None
 
-    def __init__(self):
-        self.config = config = configparser.ConfigParser()
+    def __init__(self, root):
+        config = configparser.ConfigParser()
         config.read(sys.argv[1])
         self.db_file_name = config["data"].get("dbFileName", "c:/work/git/pfnss/pfnss.db")
         self.file_ids = [i for i in range(1, int(config["data"].get("maxFileId", "10")))]
-        seed(int(config["server"].get("seed", "31056")))
+        shuffle_seed = int(config["data"].get("seed", "31056"))
+        seed(shuffle_seed)
         self.log_url = config["server"].get("logUrl", "")
         self.max_skip_count = int(config["server"].get("maxSkipCount", "5"))
         self.switch_secs = int(config["saver"].get("switchSeconds", "30"))
         self.prefix = config["saver"].get("prefix", "")
-        self.do_hide = True if config["saver"].get("doHide", "True") == "True" else False
+        do_hide = True if config["saver"].get("doHide", "True") == "True" else False
+        if win32gui and do_hide:
+            hide = win32gui.GetForegroundWindow()
+            win32gui.ShowWindow(hide, win32con.SW_HIDE)
 
         shuffle(self.file_ids)
         self.last_seen = self.file_ids[0]
@@ -63,7 +64,7 @@ class PictureFileNameSaver:
         except Exception as ex:
             print(f"No log check: {ex}")
 
-        self.root = Tk()
+        self.root = root
         self.root.bind_all('<Key>', self.keyboard_event)
         self.root.bind_all('<Motion>', self.motion_event)
         self.root.attributes("-fullscreen", True)
@@ -136,15 +137,16 @@ class PictureFileNameSaver:
         self.terminate = True
         try:
             self.root.destroy()
+            self.root = None
         except:
             print("Done")
 
     def keyboard_event(self, ev):
-        if ev.keycode in [37, 38] or ev.char == 'p':
+        if ev.keysym in ["Left", "Up"] or ev.char == 'p':
             self.previous()
-        elif ev.keycode in [39, 40] or ev.char == 'n':
+        elif ev.keysym in ["Right", "Down"] or ev.char == 'n':
             self.next()
-        elif ev.keycode == 27 or ev.char == 'q':
+        elif ev.keycode == 27 or ev.char == 'q' or ev.keysym == "Escape":
             self.end_loop(ev)
         elif ev.char == 's':
             self.save()
@@ -157,7 +159,7 @@ class PictureFileNameSaver:
         elif ev.char == 'm':
             self.mail()
         else:
-            print(f"keycode: {ev.keycode} char: '{ev.char}'")
+            print(f"keycode: {ev.keycode} char: '{ev.char}' keysym: {ev.keysym}")
 
     def save(self, mark="save"):
         with sqlite3.connect(self.db_file_name) as db:
@@ -206,10 +208,8 @@ print(f"got these args: {' '.join(sys.argv[1:])}")
 
 
 if __name__ == '__main__':
-    app = PictureFileNameSaver()
-    if win32gui and app.do_hide:
-        hide = win32gui.GetForegroundWindow()
-        win32gui.ShowWindow(hide, win32con.SW_HIDE)
+    root = Tk()
+    app = PictureFileNameSaver(root)
 
     scan_to_start = True
     skip_count = 0
@@ -258,3 +258,5 @@ if __name__ == '__main__':
                 app.reverse = False
             else:
                 app.current_idx += 1
+    if app.root:
+        app.end_loop()
