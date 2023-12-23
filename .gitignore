@@ -16,3 +16,5 @@ Pictures/
 **/.DS_Store
 .python-version
 __pycache__/
+build/
+*.spec
