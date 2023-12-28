@@ -5,7 +5,7 @@ from random import shuffle, seed
 import sqlite3
 import sys
 import time
-from tkinter import Canvas, Tk
+from tkinter import Canvas, Tk, Button, Label, Frame
 
 from PIL import Image, ImageTk
 import requests
@@ -24,6 +24,10 @@ class PictureFileNameSaver:
     current_id = None
     current_idx = 0
     paused = False
+    info = None
+    info_paused = None
+    info_fname = None
+    info_ids = None
     looping = False
     reverse = False
 
@@ -34,27 +38,37 @@ class PictureFileNameSaver:
 
     root = None
     canvas = None
+    img = None
     screen_width = None
     screen_height = None
     screen_ratio = None
     prefix = None
 
-    def __init__(self, root):
+    def __init__(self):
+        self.root = root = Tk()
+        root.attributes("-fullscreen", True)
+        self.canvas = Canvas(root, bg="black", highlightthickness=0)
+        self.canvas.pack(expand=1, fill="both")
+        self.screen_width = root.winfo_screenwidth()
+        self.screen_height = root.winfo_screenheight()
+        self.screen_ratio = self.screen_width / self.screen_height
+
         config = configparser.ConfigParser()
         config.read(sys.argv[1])
-        self.db_file_name = config["data"].get("dbFileName", "c:/work/git/pfnss/pfnss.db")
-        self.file_ids = [i for i in range(1, int(config["data"].get("maxFileId", "10")))]
-        shuffle_seed = int(config["data"].get("seed", "31056"))
-        seed(shuffle_seed)
         self.log_url = config["server"].get("logUrl", "")
         self.max_skip_count = int(config["server"].get("maxSkipCount", "5"))
         self.switch_secs = int(config["saver"].get("switchSeconds", "30"))
-        self.prefix = config["saver"].get("prefix", "")
+
         do_hide = True if config["saver"].get("doHide", "True") == "True" else False
         if win32gui and do_hide:
             hide = win32gui.GetForegroundWindow()
             win32gui.ShowWindow(hide, win32con.SW_HIDE)
 
+        self.db_file_name = config["data"].get("dbFileName", "c:/work/git/pfnss/pfnss.db")
+        self.prefix = config["saver"].get("prefix", "")
+        self.file_ids = [i for i in range(1, int(config["data"].get("maxFileId", "10")))]
+        shuffle_seed = int(config["data"].get("seed", "31056"))
+        seed(shuffle_seed)
         shuffle(self.file_ids)
         self.last_seen = self.file_ids[0]
         try:
@@ -64,15 +78,15 @@ class PictureFileNameSaver:
         except Exception as ex:
             print(f"No log check: {ex}")
 
-        self.root = root
-        self.root.bind_all('<Key>', self.keyboard_event)
-        self.root.bind_all('<Motion>', self.motion_event)
-        self.root.attributes("-fullscreen", True)
-        self.canvas = canvas = Canvas(self.root, bg="black", highlightthickness=0)
-        canvas.pack(expand=1, fill="both")
-        self.screen_width = canvas.winfo_screenwidth()
-        self.screen_height = canvas.winfo_screenheight()
-        self.screen_ratio = self.screen_width / self.screen_height
+        root.bind_all('<Key>', self.keyboard_event)
+        root.bind_all('<Motion>', self.motion_event)
+
+        self.info = Frame(self.canvas)
+        self.info_paused = Label(self.info, text="Paused", fg="white", bg="red", font="TkTextFont 10")
+        self.info_fname = Label(self.info, text="fname", fg="black", bg="lightgrey", font="TkTextFont 10")
+        self.info_fname.grid(column=2,row=1)
+        self.info_ids = Label(self.info, text="ids", fg="blue", bg="lightgrey", font="TkTextFont 10")
+        self.info_ids.grid(column=3,row=1)
 
     def get_file_id(self):
         try:
@@ -80,8 +94,8 @@ class PictureFileNameSaver:
         except:
             self.current_id = 1
         return self.current_id
-
-    def display(self, fname):
+    
+    def prepare_image(self, fname):
         jpg = Image.open(self.prefix + fname)
         w, h = jpg.size
         img_ratio = w / h
@@ -93,18 +107,20 @@ class PictureFileNameSaver:
         else:
             w = screen_width
             h = w / img_ratio
-        img = ImageTk.PhotoImage(jpg.resize((int(w), int(h))))
         x = int((screen_width - w) / 2) if w < screen_width else 0
         y = int((screen_height - h) / 2) if h < screen_height else 0
+
+        self.img = ImageTk.PhotoImage(jpg.resize((int(w), int(h))))
+        return self.canvas.create_image(x, y, image=self.img, anchor="nw")       
+
+    def display(self, fname):
+        c_image = self.prepare_image(fname)
+
         canvas = self.canvas
-        c_i = canvas.create_image(x, y, image=img, anchor="nw")
-        # fname = f"{file_no} - {fname}"
-        half_width = screen_width / 2
-        c_t1 = canvas.create_text(half_width, 15, text=fname, justify="left", fill="black", font="Courier 12")
-        c_t2 = canvas.create_text(half_width + 2, 17, text=fname, justify="left", fill="green", font="Courier 12")
-        c_t3 = canvas.create_text(half_width, 35, text=f"{self.current_id} [{self.current_idx}]", justify="left", fill="black", font="Courier 12")
-        c_t4 = canvas.create_text(half_width + 2, 37, text=f"{self.current_id} [{self.current_idx}]", justify="left", fill="green", font="Courier 12")
-        c_paused = None
+        self.info_fname["text"] = fname
+        self.info_ids["text"] = f"{self.current_id} [{self.current_idx}]"
+        c_info = canvas.create_window(self.screen_width / 2, 0, anchor="n", window=self.info)
+
         loop = True
         showing_id = self.current_id
         while loop:
@@ -116,19 +132,15 @@ class PictureFileNameSaver:
                 if showing_id != self.get_file_id():
                     loop = False
                     break
-                if (self.paused and not c_paused) or (c_paused and not self.paused):
+                if self.paused:
                     break
             if not self.paused:
                 loop = False
-                if c_paused:
-                    print(f"clearing pause {c_paused}")
-                    canvas.itemconfigure(c_paused, state="hidden")
-                    canvas.delete(c_paused)
-                    c_paused = None
+                self.info_paused.grid_forget()
             else:
-                if not c_paused:
-                    c_paused = canvas.create_text(0, 0, text="PAUSED", anchor="nw", fill="red", font="Courier 12")
-        canvas.delete(c_t1, c_t2, c_t3, c_t4, c_i)
+                self.info_paused.grid(column=1,row=1)
+        self.info_paused.grid_forget()
+        canvas.delete(c_info, c_image)
 
     def end_loop(self, ev=None):
         if ev:
@@ -136,10 +148,12 @@ class PictureFileNameSaver:
         self.looping = False
         self.terminate = True
         try:
-            self.root.destroy()
-            self.root = None
+            if self.root:
+                self.root.destroy()
+                self.root = None
+                print("Clean finish")
         except:
-            print("Done")
+            print("Messy finish")
 
     def keyboard_event(self, ev):
         if ev.keysym in ["Left", "Up"] or ev.char == 'p':
@@ -208,8 +222,7 @@ print(f"got these args: {' '.join(sys.argv[1:])}")
 
 
 if __name__ == '__main__':
-    root = Tk()
-    app = PictureFileNameSaver(root)
+    app = PictureFileNameSaver()
 
     scan_to_start = True
     skip_count = 0
@@ -258,5 +271,4 @@ if __name__ == '__main__':
                 app.reverse = False
             else:
                 app.current_idx += 1
-    if app.root:
-        app.end_loop()
+    app.end_loop()
