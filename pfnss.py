@@ -136,10 +136,6 @@ class PictureFileNameSaver:
                     break
             if not self.paused:
                 loop = False
-                self.info_paused.grid_forget()
-            else:
-                self.info_paused.grid(column=1,row=1)
-        self.info_paused.grid_forget()
         canvas.delete(c_info, c_image)
 
     def end_loop(self, ev=None):
@@ -187,10 +183,12 @@ class PictureFileNameSaver:
     def resume(self):
         if self.paused:
             print(f"resume {self.current_id}")
+            self.info_paused.grid_forget()
             self.paused = False
         else:
             print(f"pause {self.current_id}")
             self.paused = True
+            self.info_paused.grid(column=1, row=1)
 
 
     def edit(self):
@@ -217,58 +215,61 @@ class PictureFileNameSaver:
             self.current_idx = 0
         print(f"advanced to {self.get_file_id()} [{self.current_idx}]")
 
+    def run(self):
+        scan_to_start = True
+        skip_count = 0
+        self.looping = True
+        while self.looping:
+            self.current_idx = 0
+            file_count = len(self.file_ids)
+            while self.current_idx < file_count:
+                if self.terminate or not self.looping:
+                    self.end_loop()
+                    break
+                if scan_to_start:
+                    last_seen = self.last_seen
+                    idx = 0
+                    for file_no in self.file_ids:
+                        if file_no == last_seen:
+                            break
+                        idx += 1
+                        continue
+                    print(f"Starting with {file_no} [{idx}]")
+                    scan_to_start = False
+                    self.current_idx = idx
+                current_id = self.get_file_id()
+                with sqlite3.connect(self.db_file_name) as db:
+                    fname = db.execute("select name from files where id = ?", (current_id,)).fetchone()[0]
+                    if (".jpg" not in fname) and (".jpeg" not in fname):
+                        self.next()
+                        continue
+                    ts = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
+                    db.execute("insert into log (ts, file_id) values (?,?)", (ts, current_id))
+                    db.commit()
+                if self.log_url and skip_count < self.max_skip_count:
+                    try:
+                        o = json.dumps({"ts": ts, "file_no": current_id, "name": fname})
+                        requests.post(self.log_url, headers={"Content-Type": "application/json"}, data=o)
+                        print("reset skip count")
+                        skip_count = 0
+                    except Exception as e:
+                        print(f"{skip_count} < {self.max_skip_count} - {e}")
+                        skip_count += 1
+                try:
+                    self.display(f"{fname}")
+                except Exception as ex:
+                    print(ex)
+                if self.reverse:
+                    self.reverse = False
+                else:
+                    self.current_idx += 1
+        self.end_loop()
+
+
 
 print(f"got these args: {' '.join(sys.argv[1:])}")
 
 
 if __name__ == '__main__':
     app = PictureFileNameSaver()
-
-    scan_to_start = True
-    skip_count = 0
-    app.looping = True
-    while app.looping:
-        app.current_idx = 0
-        file_count = len(app.file_ids)
-        while app.current_idx < file_count:
-            if app.terminate or not app.looping:
-                app.end_loop()
-                break
-            if scan_to_start:
-                last_seen = app.last_seen
-                idx = 0
-                for file_no in app.file_ids:
-                    if file_no == last_seen:
-                        break
-                    idx += 1
-                    continue
-                print(f"Starting with {file_no} [{idx}]")
-                scan_to_start = False
-                app.current_idx = idx
-            current_id = app.get_file_id()
-            with sqlite3.connect(app.db_file_name) as db:
-                fname = db.execute("select name from files where id = ?", (current_id,)).fetchone()[0]
-                if (".jpg" not in fname) and (".jpeg" not in fname):
-                    app.next()
-                    continue
-                ts = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
-                db.execute("insert into log (ts, file_id) values (?,?)", (ts, current_id))
-                db.commit()
-            if app.log_url and skip_count < app.max_skip_count:
-                try:
-                    o = json.dumps({"ts": ts, "file_no": current_id, "name": fname})
-                    requests.post(app.log_url, headers={"Content-Type": "application/json"}, data=o)
-                    print("reset skip count")
-                    skip_count = 0
-                except Exception as e:
-                    print(f"{skip_count} < {app.max_skip_count} - {e}")
-                    skip_count += 1
-            try:
-                app.display(f"{fname}")
-            except Exception as ex:
-                print(ex)
-            if app.reverse:
-                app.reverse = False
-            else:
-                app.current_idx += 1
-    app.end_loop()
+    app.run()
