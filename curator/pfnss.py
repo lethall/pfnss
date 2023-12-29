@@ -45,6 +45,7 @@ class PictureFileNameSaver:
     screen_height = None
     screen_ratio = None
     prefix = None
+    font = "TkTextFont 10"
 
     def __init__(self) -> None:
         self.root = root = Tk()
@@ -58,8 +59,11 @@ class PictureFileNameSaver:
         config = configparser.ConfigParser()
         config.read(sys.argv[1])
         self.log_url = config["server"].get("logUrl", "")
-        self.max_skip_count = int(config["server"].get("maxSkipCount", "5"))
-        self.switch_secs = int(config["saver"].get("switchSeconds", "30"))
+        self.max_skip_count = config["server"].getint("maxSkipCount", 5)
+        self.switch_secs = config["saver"].getint("switchSeconds", 30)
+        self.show_fname = config["saver"].getboolean("showFileName", True)
+        self.show_id = config["saver"].getboolean("showId", True)
+        self.show_seq = config["saver"].getboolean("showSequence", True)
 
         do_hide = True if config["saver"].get("doHide", "True") == "True" else False
         if win32gui and do_hide:
@@ -71,13 +75,13 @@ class PictureFileNameSaver:
         self.prefix = config["saver"].get("prefix", "")
         max_file_id = 10
         try:
-            max_file_id = int(config["data"].get("maxFileId", "10"))
+            max_file_id = config["data"].getint("maxFileId", 10)
             if max_file_id < 1:
                 max_file_id = self.data.get_file_count()
         except:
             raise SystemExit("Failed to get file IDs")
         self.file_ids = [i for i in range(1, max_file_id + 1)]
-        shuffle_seed = int(config["data"].get("seed", "31056"))
+        shuffle_seed = config["data"].getint("seed", 31056)
         seed(shuffle_seed)
         shuffle(self.file_ids)
         self.last_seen = self.file_ids[0]
@@ -90,11 +94,13 @@ class PictureFileNameSaver:
         root.bind_all('<Motion>', self.motion_event)
 
         self.info = Frame(self.canvas)
-        self.info_paused = Label(self.info, text="Paused", fg="white", bg="red", font="TkTextFont 10")
-        self.info_fname = Label(self.info, text="fname", fg="white", bg="black", font="TkTextFont 10")
-        self.info_fname.grid(column=2,row=1)
-        self.info_ids = Label(self.info, text="ids", fg="white", bg="blue", font="TkTextFont 10")
-        self.info_ids.grid(column=3,row=1)
+        self.info_paused = Label(self.info, text="Paused", fg="white", bg="red", font=self.font)
+        if self.show_fname:
+            self.info_fname = Label(self.info, text="fname", fg="white", bg="black", font=self.font)
+            self.info_fname.grid(column=2,row=1)
+        if self.show_id or self.show_seq:
+            self.info_ids = Label(self.info, text="ids", fg="white", bg="blue", font=self.font)
+            self.info_ids.grid(column=3,row=1)
 
     def get_file_id(self) -> int:
         try:
@@ -125,8 +131,15 @@ class PictureFileNameSaver:
         c_image = self.prepare_image(fname)
 
         canvas = self.canvas
-        self.info_fname["text"] = fname
-        self.info_ids["text"] = f"{self.current_id} [{self.current_idx}]"
+        if self.show_fname:
+            self.info_fname["text"] = fname
+        ids = []
+        if self.show_id:
+            ids.append(f"{self.current_id}")
+        if self.show_seq:
+            ids.append(f"[{self.current_idx}]")
+        if ids:
+            self.info_ids["text"] = " ".join(ids)
         c_info = canvas.create_window(self.screen_width / 2, 0, anchor="n", window=self.info)
 
         loop = True

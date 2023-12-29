@@ -5,6 +5,18 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Python: Main",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/main.py",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "args": [
+        "dev.ini",
+        "/S"
+      ]
+    },
+    {
       "name": "Wails: Production settings",
       "type": "go",
       "request": "launch",
@@ -39,18 +51,6 @@
       "console": "integratedTerminal",
       "justMyCode": true,
       "args": []
-    },
-    {
-      "name": "Python: Main",
-      "type": "python",
-      "request": "launch",
-      "program": "${workspaceFolder}/main.py",
-      "console": "integratedTerminal",
-      "justMyCode": true,
-      "args": [
-        "dev.ini",
-        "/S"
-      ]
     }
   ]
 }
