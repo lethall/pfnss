@@ -1,14 +1,15 @@
-from datetime import datetime, UTC
 import configparser
 import json
 from random import shuffle, seed
-import sqlite3
 import sys
 import time
-from tkinter import Canvas, Tk, Button, Label, Frame
+from tkinter import Canvas, Tk, Label, Frame
 
 from PIL import Image, ImageTk
 import requests
+
+from .db import Data
+from .config import config_dialog
 
 win32gui = None
 try:
@@ -19,6 +20,7 @@ except:
 
 class PictureFileNameSaver:
     db_file_name = None
+    data = None
     file_ids = None
     last_seen = None
     current_id = None
@@ -44,7 +46,7 @@ class PictureFileNameSaver:
     screen_ratio = None
     prefix = None
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.root = root = Tk()
         root.attributes("-fullscreen", True)
         self.canvas = Canvas(root, bg="black", highlightthickness=0)
@@ -65,16 +67,22 @@ class PictureFileNameSaver:
             win32gui.ShowWindow(hide, win32con.SW_HIDE)
 
         self.db_file_name = config["data"].get("dbFileName", "c:/work/git/pfnss/pfnss.db")
+        self.data = Data(self.db_file_name)
         self.prefix = config["saver"].get("prefix", "")
-        self.file_ids = [i for i in range(1, int(config["data"].get("maxFileId", "10")))]
+        max_file_id = 10
+        try:
+            max_file_id = int(config["data"].get("maxFileId", "10"))
+            if max_file_id < 1:
+                max_file_id = self.data.get_file_count()
+        except:
+            raise SystemExit("Failed to get file IDs")
+        self.file_ids = [i for i in range(1, max_file_id + 1)]
         shuffle_seed = int(config["data"].get("seed", "31056"))
         seed(shuffle_seed)
         shuffle(self.file_ids)
         self.last_seen = self.file_ids[0]
         try:
-            with sqlite3.connect(self.db_file_name) as db:
-                last_ts, self.last_seen = db.execute("select ts, file_id from log where ts = (select max(ts) from log)").fetchone()
-                print(f"{self.last_seen} was seen at {last_ts}")
+            self.last_seen = self.data.get_last_seen()
         except Exception as ex:
             print(f"No log check: {ex}")
 
@@ -83,19 +91,19 @@ class PictureFileNameSaver:
 
         self.info = Frame(self.canvas)
         self.info_paused = Label(self.info, text="Paused", fg="white", bg="red", font="TkTextFont 10")
-        self.info_fname = Label(self.info, text="fname", fg="black", bg="lightgrey", font="TkTextFont 10")
+        self.info_fname = Label(self.info, text="fname", fg="white", bg="black", font="TkTextFont 10")
         self.info_fname.grid(column=2,row=1)
-        self.info_ids = Label(self.info, text="ids", fg="blue", bg="lightgrey", font="TkTextFont 10")
+        self.info_ids = Label(self.info, text="ids", fg="white", bg="blue", font="TkTextFont 10")
         self.info_ids.grid(column=3,row=1)
 
-    def get_file_id(self):
+    def get_file_id(self) -> int:
         try:
             self.current_id = self.file_ids[self.current_idx]
         except:
             self.current_id = 1
         return self.current_id
     
-    def prepare_image(self, fname):
+    def prepare_image(self, fname) -> int:
         jpg = Image.open(self.prefix + fname)
         w, h = jpg.size
         img_ratio = w / h
@@ -113,7 +121,7 @@ class PictureFileNameSaver:
         self.img = ImageTk.PhotoImage(jpg.resize((int(w), int(h))))
         return self.canvas.create_image(x, y, image=self.img, anchor="nw")       
 
-    def display(self, fname):
+    def display(self, fname) -> None:
         c_image = self.prepare_image(fname)
 
         canvas = self.canvas
@@ -138,7 +146,7 @@ class PictureFileNameSaver:
                 loop = False
         canvas.delete(c_info, c_image)
 
-    def end_loop(self, ev=None):
+    def end_loop(self, ev=None) -> None:
         if ev:
             print(f"Ending event type {ev.type}")
         self.looping = False
@@ -151,7 +159,7 @@ class PictureFileNameSaver:
         except:
             print("Messy finish")
 
-    def keyboard_event(self, ev):
+    def keyboard_event(self, ev) -> None:
         if ev.keysym in ["Left", "Up"] or ev.char == 'p':
             self.previous()
         elif ev.keysym in ["Right", "Down"] or ev.char == 'n':
@@ -168,16 +176,15 @@ class PictureFileNameSaver:
             self.edit()
         elif ev.char == 'm':
             self.mail()
+        elif ev.char == 'c':
+            config_dialog(self.root)
         else:
             print(f"keycode: {ev.keycode} char: '{ev.char}' keysym: {ev.keysym}")
 
-    def save(self, mark="save"):
-        with sqlite3.connect(self.db_file_name) as db:
-            ts = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
-            db.execute("insert into marks (ts, file_id, mark) values (?,?,?)", (ts, self.current_id, mark))
-            db.commit()
+    def save(self, mark="save") -> None:
+        self.data.save(self.current_id, mark)
 
-    def delete(self):
+    def delete(self) -> None:
         self.save("delete")
 
     def resume(self):
@@ -191,16 +198,16 @@ class PictureFileNameSaver:
             self.info_paused.grid(column=1, row=1)
 
 
-    def edit(self):
+    def edit(self) -> None:
         print(f"edit {self.current_id}")
 
-    def mail(self):
+    def mail(self) -> None:
         print(f"mail {self.current_id}")
 
-    def motion_event(self, ev):
+    def motion_event(self, ev) -> None:
         self.end_loop(ev)
 
-    def previous(self):
+    def previous(self) -> None:
         self.reverse = True
         if self.current_idx > 0:
             self.current_idx -= 1
@@ -208,14 +215,14 @@ class PictureFileNameSaver:
             self.current_idx = len(self.file_ids) - 1
         print(f"reversed to {self.get_file_id()} [{self.current_idx}]")
 
-    def next(self):
+    def next(self) -> None:
         if self.current_idx < (len(self.file_ids) - 1):
             self.current_idx += 1
         else:
             self.current_idx = 0
         print(f"advanced to {self.get_file_id()} [{self.current_idx}]")
 
-    def run(self):
+    def run(self) -> None:
         scan_to_start = True
         skip_count = 0
         self.looping = True
@@ -238,14 +245,11 @@ class PictureFileNameSaver:
                     scan_to_start = False
                     self.current_idx = idx
                 current_id = self.get_file_id()
-                with sqlite3.connect(self.db_file_name) as db:
-                    fname = db.execute("select name from files where id = ?", (current_id,)).fetchone()[0]
-                    if (".jpg" not in fname) and (".jpeg" not in fname):
-                        self.next()
-                        continue
-                    ts = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
-                    db.execute("insert into log (ts, file_id) values (?,?)", (ts, current_id))
-                    db.commit()
+                fname = self.data.get_file_name(current_id)
+                if not fname:
+                    self.next()
+                    continue
+
                 if self.log_url and skip_count < self.max_skip_count:
                     try:
                         o = json.dumps({"ts": ts, "file_no": current_id, "name": fname})
@@ -264,12 +268,3 @@ class PictureFileNameSaver:
                 else:
                     self.current_idx += 1
         self.end_loop()
-
-
-
-print(f"got these args: {' '.join(sys.argv[1:])}")
-
-
-if __name__ == '__main__':
-    app = PictureFileNameSaver()
-    app.run()
