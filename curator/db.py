@@ -33,7 +33,10 @@ class Data:
     def get_file_name(self, id):
         fname = None
         with connect(self.db_file_name) as db:
-            fname = db.execute("select name from files where id = ?", (id,)).fetchone()[0]
+            try:
+                fname = db.execute("select name from files where id = ?", (id,)).fetchone()[0]
+            except:
+                return None
             if (".jpg" not in fname) and (".jpeg" not in fname):
                 return None
             ts = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
