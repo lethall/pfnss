@@ -46,6 +46,8 @@ class PictureFileNameSaver:
     screen_ratio = None
     prefix = None
     font = "TkTextFont 10"
+    key_func_id = None
+    motion_func_id = None
 
     def __init__(self) -> None:
         self.root = root = Tk()
@@ -90,9 +92,6 @@ class PictureFileNameSaver:
         except Exception as ex:
             print(f"No log check: {ex}")
 
-        root.bind_all('<Key>', self.keyboard_event)
-        root.bind_all('<Motion>', self.motion_event)
-
         self.info = Frame(self.canvas)
         self.info_paused = Label(self.info, text="Paused", fg="white", bg="red", font=self.font)
         if self.show_fname:
@@ -101,6 +100,16 @@ class PictureFileNameSaver:
         if self.show_id or self.show_seq:
             self.info_ids = Label(self.info, text="ids", fg="white", bg="blue", font=self.font)
             self.info_ids.grid(column=3,row=1)
+        
+        self.activate_events()
+    
+    def activate_events(self, do_set=True) -> None:
+        if do_set:
+            self.key_func_id = self.root.bind('<Key>', self.keyboard_event)
+            self.motion_func_id = self.root.bind('<Motion>', self.motion_event)
+        else:
+            self.root.unbind('<Key>', self.key_func_id)
+            self.root.unbind('<Motion>', self.motion_func_id)
 
     def get_file_id(self) -> int:
         try:
@@ -190,7 +199,9 @@ class PictureFileNameSaver:
         elif ev.char == 'm':
             self.mail()
         elif ev.char == 'c':
+            self.activate_events(False)
             config_dialog(self.root)
+            self.activate_events()
         else:
             print(f"keycode: {ev.keycode} char: '{ev.char}' keysym: {ev.keysym}")
 
