@@ -30,6 +30,7 @@ class PictureFileNameSaver:
     info_paused = None
     info_fname = None
     info_ids = None
+    info_mark = None
     looping = False
     reverse = False
 
@@ -100,6 +101,7 @@ class PictureFileNameSaver:
         if self.show_id or self.show_seq:
             self.info_ids = Label(self.info, text="ids", fg="white", bg="blue", font=self.font)
             self.info_ids.grid(column=3,row=1)
+        self.info_mark = Label(self.info, font=self.font)
         
         self.enable_events()
     
@@ -136,8 +138,27 @@ class PictureFileNameSaver:
         self.img = ImageTk.PhotoImage(jpg.resize((int(w), int(h))))
         return self.canvas.create_image(x, y, image=self.img, anchor="nw")       
 
+    def display_mark(self):
+        mark = self.data.get_last_mark(self.current_id)
+        if mark and mark != " ":
+            if mark[0] == "s":
+                msg = "Save"
+                fg_color = "white"
+                bg_color = "darkgreen"
+            elif mark[0] == "d":
+                msg = "Delete"
+                fg_color = "darkred"
+                bg_color = "yellow"
+            self.info_mark["bg"] = bg_color
+            self.info_mark["fg"] = fg_color
+            self.info_mark["text"] = msg
+            self.info_mark.grid(column=4, row=1)
+        else:
+            self.info_mark.grid_forget()
+
     def display(self, fname) -> None:
         c_image = self.prepare_image(fname)
+        self.display_mark()
 
         canvas = self.canvas
         if self.show_fname:
@@ -189,9 +210,11 @@ class PictureFileNameSaver:
         elif ev.keycode == 27 or ev.char == 'q' or ev.keysym == "Escape":
             self.end_loop(ev)
         elif ev.char == 's':
-            self.save()
+            self.mark(ev.char)
         elif ev.char == 'd':
-            self.delete()
+            self.mark(ev.char)
+        elif ev.char == 'r':
+            self.mark(' ')
         elif ev.char == ' ' or ev.keycode == 13:
             self.resume()
         elif ev.char == 'e':
@@ -203,18 +226,18 @@ class PictureFileNameSaver:
             cats = ["pet", "place", "home", "travel", "fun", "health"]
             try:
                 config_dialog = Configure(self.root, categories=cats)
-                print(f"Got name '{config_dialog.photo_name.get()}'")
+                print(f"Got name '{config_dialog.photo_name}' desc '{config_dialog.photo_description}'")
+                for selected in config_dialog.chosen_categories:
+                    print(cats[selected])
             except Exception as exc:
                 print(exc)
             self.enable_events()
         else:
             print(f"keycode: {ev.keycode} char: '{ev.char}' keysym: {ev.keysym}")
 
-    def save(self, mark="save") -> None:
-        self.data.save(self.current_id, mark)
-
-    def delete(self) -> None:
-        self.save("delete")
+    def mark(self, mark="save") -> None:
+        self.data.save(self.current_id, mark[0])
+        self.display_mark()
 
     def resume(self):
         if self.paused:

@@ -15,12 +15,30 @@ class Data:
     def get_last_seen(self) -> int:
         last_seen = 0
         with connect(self.db_file_name) as db:
-            last_ts, last_seen = db.execute(
+            result = db.execute(
                 """select ts, file_id from log
                 where ts = (select max(ts) from log)
                 """).fetchone()
-            print(f"{last_seen} was seen at {last_ts}")
+            if result:
+                last_ts, last_seen = result
+                print(f"{last_seen} was seen at {last_ts}")
+            else:
+                print("no log")
         return last_seen
+    
+    def get_last_mark(self, id) -> int:
+        last_mark = ""
+        with connect(self.db_file_name) as db:
+            result = db.execute(
+                """select mark, ts from marks
+                where file_id = ? order by ts desc limit 1
+                """, (id,)).fetchone()
+            if result:
+                last_mark, last_ts = result
+                print(f"{last_mark} was marked on {id} at {last_ts}")
+            else:
+                print(f"no mark")
+        return last_mark
     
     def save(self, current_id, mark) -> None:
         with connect(self.db_file_name) as db:
