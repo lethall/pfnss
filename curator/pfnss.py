@@ -9,7 +9,7 @@ from PIL import Image, ImageTk
 import requests
 
 from .db import Data
-from .config import config_dialog
+from .config import Configure
 
 win32gui = None
 try:
@@ -101,15 +101,15 @@ class PictureFileNameSaver:
             self.info_ids = Label(self.info, text="ids", fg="white", bg="blue", font=self.font)
             self.info_ids.grid(column=3,row=1)
         
-        self.activate_events()
+        self.enable_events()
     
-    def activate_events(self, do_set=True) -> None:
-        if do_set:
-            self.key_func_id = self.root.bind('<Key>', self.keyboard_event)
-            self.motion_func_id = self.root.bind('<Motion>', self.motion_event)
-        else:
-            self.root.unbind('<Key>', self.key_func_id)
-            self.root.unbind('<Motion>', self.motion_func_id)
+    def enable_events(self) -> None:
+        self.key_func_id = self.root.bind('<Key>', self.keyboard_event)
+        self.motion_func_id = self.root.bind('<Motion>', self.motion_event)
+
+    def disable_events(self) -> None:
+        self.root.unbind('<Key>', self.key_func_id)
+        self.root.unbind('<Motion>', self.motion_func_id)
 
     def get_file_id(self) -> int:
         try:
@@ -199,9 +199,14 @@ class PictureFileNameSaver:
         elif ev.char == 'm':
             self.mail()
         elif ev.char == 'c':
-            self.activate_events(False)
-            config_dialog(self.root)
-            self.activate_events()
+            self.disable_events()
+            cats = ["pet", "place", "home", "travel", "fun", "health"]
+            try:
+                config_dialog = Configure(self.root, categories=cats)
+                print(f"Got name '{config_dialog.photo_name.get()}'")
+            except Exception as exc:
+                print(exc)
+            self.enable_events()
         else:
             print(f"keycode: {ev.keycode} char: '{ev.char}' keysym: {ev.keysym}")
 
