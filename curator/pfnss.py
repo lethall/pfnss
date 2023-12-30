@@ -10,6 +10,8 @@ import requests
 
 from .db import Data
 from .config import Configure
+from .photo_info import PhotoInfo
+from . import CATEGORIES
 
 win32gui = None
 try:
@@ -221,14 +223,16 @@ class PictureFileNameSaver:
             self.edit()
         elif ev.char == 'm':
             self.mail()
-        elif ev.char == 'c':
+        elif ev.char == 'i':
             self.disable_events()
-            cats = ["pet", "place", "home", "travel", "fun", "health"]
             try:
-                config_dialog = Configure(self.root, categories=cats)
-                print(f"Got name '{config_dialog.photo_name}' desc '{config_dialog.photo_description}'")
-                for selected in config_dialog.chosen_categories:
-                    print(cats[selected])
+                info_dialog = PhotoInfo(self.root)
+                if not info_dialog.photo_name:
+                    self.enable_events()
+                    return
+                selected_cats = [CATEGORIES[selected] for selected in info_dialog.chosen_categories]
+                self.data.save_photo_info(self.current_id, info_dialog.photo_name,
+                                          info_dialog.photo_description, selected_cats)
             except Exception as exc:
                 print(exc)
             self.enable_events()

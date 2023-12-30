@@ -35,9 +35,9 @@ class Data:
                 """, (id,)).fetchone()
             if result:
                 last_mark, last_ts = result
-                print(f"{last_mark} was marked on {id} at {last_ts}")
-            else:
-                print(f"no mark")
+                # print(f"{last_mark} was marked on {id} at {last_ts}")
+            # else:
+            #     print(f"no mark")
         return last_mark
     
     def save(self, current_id, mark) -> None:
@@ -61,3 +61,6 @@ class Data:
             db.execute("insert into log (ts, file_id) values (?,?)", (ts, id))
             db.commit()        
         return fname
+
+    def save_photo_info(self, id, name, description, categories):
+        print(f"Got name '{name}' desc '{description}' [{", ".join(categories)}] for {id}")
