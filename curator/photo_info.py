@@ -4,13 +4,20 @@ from . import CATEGORIES
 
 
 class PhotoInfo:
+    file_name : str = None
     photo_name : str = None
     photo_description : str = None
+    categories : str = None
     chosen_categories : list = None
 
-    def __init__(self, root : Toplevel) -> None:
+    def __init__(self, values : tuple):
+        self.file_name, self.photo_name, self.description, self.categories = values
+        self.chosen_categories = self.categories.split(", ") if self.categories else None
+    
+    def dialog(self, root : Toplevel) -> None:
         def save():
             self.chosen_categories = lb_categories.curselection()
+            self.categories = ", ".join([CATEGORIES[selected] for selected in self.chosen_categories])
             self.photo_name = photo_name.get()
             self.photo_description = photo_description.get()
             dlg.grab_release()
@@ -29,9 +36,10 @@ class PhotoInfo:
         ttk.Label(dlg, text="Categories:").grid(column=2, row=current_row, sticky=W)
 
         current_row += 1
-        photo_name = StringVar(root)
+        photo_name = StringVar(root, value=self.photo_name)
         e_photo_name = ttk.Entry(dlg, width=20, textvariable=photo_name)
         e_photo_name.grid(column=1, row=current_row, sticky=[N, W])
+
         category_list = StringVar(value=CATEGORIES)
         lb_categories = Listbox(dlg, selectmode="extended", listvariable=category_list, height=4)
         lb_categories.grid(column=2, row=current_row, rowspan=2, sticky=[N, S, E, W])
@@ -43,7 +51,7 @@ class PhotoInfo:
         ttk.Label(dlg, text="Description:").grid(column=1, row=current_row, sticky=[S, W])
 
         current_row += 1
-        photo_description = StringVar(root)
+        photo_description = StringVar(root, value=self.description)
         e_description = ttk.Entry(dlg, width=40, textvariable=photo_description)
         e_description.grid(column=1, row=current_row, columnspan=2, sticky=W)
 

@@ -27,6 +27,7 @@ class PictureFileNameSaver:
     last_seen = None
     current_id = None
     current_idx = 0
+    current_info = None
     paused = False
     info = None
     info_paused = None
@@ -104,6 +105,10 @@ class PictureFileNameSaver:
             self.info_ids = Label(self.info, text="ids", fg="white", bg="blue", font=self.font)
             self.info_ids.grid(column=3,row=1)
         self.info_mark = Label(self.info, font=self.font)
+
+        self.info_name = Label(self.info, text="name", fg="white", bg="darkblue", font=self.font)
+        self.info_desc = Label(self.info, text="name", fg="white", bg="darkblue", font=self.font)
+        self.info_cats = Label(self.info, text="name", fg="white", bg="darkblue", font=self.font)
         
         self.enable_events()
     
@@ -157,10 +162,28 @@ class PictureFileNameSaver:
             self.info_mark.grid(column=4, row=1)
         else:
             self.info_mark.grid_forget()
+    
+    def display_info(self):
+        self.info_name.grid_forget()
+        self.info_desc.grid_forget()
+        self.info_cats.grid_forget()
+        info = self.current_info
+        if info.photo_name:
+            self.info_name["text"] = info.photo_name
+            self.info_name.grid(column=2,row=2)
+        if info.description:
+            self.info_desc["text"] = info.description
+            self.info_desc.grid(column=3,row=2)
+        if info.categories:
+            self.info_cats["text"] = info.categories
+            self.info_cats.grid(column=4,row=2)
 
-    def display(self, fname) -> None:
+
+    def display(self) -> None:
+        fname = self.current_info.file_name
         c_image = self.prepare_image(fname)
         self.display_mark()
+        self.display_info()
 
         canvas = self.canvas
         if self.show_fname:
@@ -226,13 +249,12 @@ class PictureFileNameSaver:
         elif ev.char == 'i':
             self.disable_events()
             try:
-                info_dialog = PhotoInfo(self.root)
-                if not info_dialog.photo_name:
+                info = self.current_info
+                info.dialog(self.root)
+                if not info.photo_name:
                     self.enable_events()
                     return
-                selected_cats = [CATEGORIES[selected] for selected in info_dialog.chosen_categories]
-                self.data.save_photo_info(self.current_id, info_dialog.photo_name,
-                                          info_dialog.photo_description, selected_cats)
+                self.data.save_photo_info(self.current_id, info)
             except Exception as exc:
                 print(exc)
             self.enable_events()
@@ -301,14 +323,14 @@ class PictureFileNameSaver:
                     scan_to_start = False
                     self.current_idx = idx
                 current_id = self.get_file_id()
-                fname = self.data.get_file_name(current_id)
-                if not fname:
+                current_info = self.data.get_file_info(current_id)
+                if not current_info:
                     self.next()
                     continue
 
                 if self.log_url and skip_count < self.max_skip_count:
                     try:
-                        o = json.dumps({"ts": ts, "file_no": current_id, "name": fname})
+                        o = json.dumps({"ts": ts, "file_no": current_id, "name": current_info.file_name})
                         requests.post(self.log_url, headers={"Content-Type": "application/json"}, data=o)
                         print("reset skip count")
                         skip_count = 0
@@ -316,7 +338,8 @@ class PictureFileNameSaver:
                         print(f"{skip_count} < {self.max_skip_count} - {e}")
                         skip_count += 1
                 try:
-                    self.display(f"{fname}")
+                    self.current_info = current_info
+                    self.display()
                 except Exception as ex:
                     print(ex)
                 if self.reverse:

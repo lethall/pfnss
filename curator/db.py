@@ -1,17 +1,19 @@
 from sqlite3 import connect
 from datetime import datetime, UTC
 
+from .photo_info import PhotoInfo
+
 class Data:
     db_file_name = None
     def __init__(self, db_file_name) -> None:
         self.db_file_name = db_file_name
         with connect(self.db_file_name) as db:
             db.executescript("""
-CREATE TABLE IF NOT EXISTS files (id integer primary key autoincrement, name);
-CREATE TABLE IF NOT EXISTS log(ts,file_id integer not null);
-CREATE TABLE IF NOT EXISTS marks(ts,file_id integer not null,mark);
-CREATE TABLE IF NOT EXISTS info(file_id integer primary key, name text, description text, categories text);
-""")
+                CREATE TABLE IF NOT EXISTS files (id integer primary key autoincrement, name);
+                CREATE TABLE IF NOT EXISTS log(ts,file_id integer not null);
+                CREATE TABLE IF NOT EXISTS marks(ts,file_id integer not null,mark);
+                CREATE TABLE IF NOT EXISTS info(file_id integer primary key, name text, description text, categories text);
+                """)
             db.commit()
 
     def get_file_count(self) -> int:
@@ -56,23 +58,24 @@ CREATE TABLE IF NOT EXISTS info(file_id integer primary key, name text, descript
                 (ts, current_id, mark))
             db.commit()
 
-    def get_file_name(self, id):
-        fname = None
+    def get_file_info(self, id) -> PhotoInfo:
         with connect(self.db_file_name) as db:
-            try:
-                fname = db.execute("select name from files where id = ?", (id,)).fetchone()[0]
-            except:
+            result = db.execute(
+                    """select a.name, b.name, b.description, b.categories
+                    from files a left outer join info b on (a.id = b.file_id)
+                    where a.id = ?""", (id,)).fetchone()
+            if not result:
                 return None
-            if (".jpg" not in fname) and (".jpeg" not in fname):
+            info = PhotoInfo(result)
+            if not info.file_name.endswith(".jpg") and not info.file_name.endswith(".jpeg"):
                 return None
             ts = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
             db.execute("insert into log (ts, file_id) values (?,?)", (ts, id))
             db.commit()        
-        return fname
+        return info
 
-    def save_photo_info(self, id, name, description, categories):
-        cats = ", ".join(categories)
-        print(f"Got name '{name}' desc '{description}' [{cats}] for {id}")
+    def save_photo_info(self, id, info : PhotoInfo) -> None:
+        name, description, cats = info.photo_name, info.description, info.categories
         with connect(self.db_file_name) as db:
             db.execute(
                 """insert into info (file_id, name, description, categories) values (?,?,?,?)
