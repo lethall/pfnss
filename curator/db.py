@@ -5,6 +5,14 @@ class Data:
     db_file_name = None
     def __init__(self, db_file_name) -> None:
         self.db_file_name = db_file_name
+        with connect(self.db_file_name) as db:
+            db.executescript("""
+CREATE TABLE IF NOT EXISTS files (id integer primary key autoincrement, name);
+CREATE TABLE IF NOT EXISTS log(ts,file_id integer not null);
+CREATE TABLE IF NOT EXISTS marks(ts,file_id integer not null,mark);
+CREATE TABLE IF NOT EXISTS info(file_id integer primary key, name text, description text, categories text);
+""")
+            db.commit()
 
     def get_file_count(self) -> int:
         count = 0
@@ -63,4 +71,12 @@ class Data:
         return fname
 
     def save_photo_info(self, id, name, description, categories):
-        print(f"Got name '{name}' desc '{description}' [{", ".join(categories)}] for {id}")
+        cats = ", ".join(categories)
+        print(f"Got name '{name}' desc '{description}' [{cats}] for {id}")
+        with connect(self.db_file_name) as db:
+            db.execute(
+                """insert into info (file_id, name, description, categories) values (?,?,?,?)
+                on conflict do update set name=?, description=?, categories=? where file_id=?
+                """, (id, name, description, cats, name, description, cats, id))
+            db.commit()
+

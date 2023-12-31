@@ -74,6 +74,7 @@ The project file is a `SQLite` database with these table definitions:
 CREATE TABLE files (id integer primary key autoincrement, name);
 CREATE TABLE log(ts,file_id integer not null);
 CREATE TABLE marks(ts,file_id integer not null,mark);
+CREATE TABLE IF NOT EXISTS info(file_id integer primary key, name text, description text, categories text);
 ```
 
 Note that `files.name` is conditioned as needed for the web UI to be able to find and display the image. There is a configurable replacement (`regex`) pattern and a replacement string to help with this; but these are seldom needed if the `files` have been populated with the built-in directory scanner.
