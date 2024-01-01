@@ -346,7 +346,7 @@ class PictureFileNameSaver:
                     self.current_info = current_info
                     self.display()
                 except Exception as ex:
-                    print(ex)
+                    print(f"{ex}\n{current_id} [{self.current_idx}] should be deleted")
                 if self.reverse:
                     self.reverse = False
                 else:
