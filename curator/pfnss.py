@@ -56,6 +56,7 @@ class PictureFileNameSaver:
     desc_font = "TkTextFont 16"
     key_func_id = None
     motion_func_id = None
+    motion_enabled = False
 
     def __init__(self) -> None:
         self.root = root = Tk()
@@ -70,6 +71,10 @@ class PictureFileNameSaver:
         config.read(sys.argv[1])
         self.log_url = config["server"].get("logUrl", "")
         self.max_skip_count = config["server"].getint("maxSkipCount", 5)
+
+        if len(sys.argv) > 2 and sys.argv[2].lower() == "/s":
+            self.motion_enabled = True
+        self.motion_enabled = config["saver"].getboolean("stopOnMotion", self.motion_enabled)
         self.switch_secs = config["saver"].getint("switchSeconds", 30)
         self.show_fname = config["saver"].getboolean("showFileName", True)
         self.show_id = config["saver"].getboolean("showId", True)
@@ -114,12 +119,12 @@ class PictureFileNameSaver:
         self.info_name = Label(self.info, text="name", fg="red", bg="black", font=self.desc_font, anchor=W)
         self.info_desc = Label(self.info, text="name", fg="white", bg="black", font=self.desc_font, anchor=W)
         self.info_cats = Label(self.info, text="name", fg="yellow", bg="black", font=self.desc_font, anchor=W)
-        
         self.enable_events()
     
     def enable_events(self) -> None:
         self.key_func_id = self.root.bind('<Key>', self.keyboard_event)
-        self.motion_func_id = self.root.bind('<Motion>', self.motion_event)
+        if self.motion_enabled:
+            self.motion_func_id = self.root.bind('<Motion>', self.motion_event)
 
     def disable_events(self) -> None:
         self.root.unbind('<Key>', self.key_func_id)
