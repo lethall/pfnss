@@ -34,6 +34,9 @@ class PictureFileNameSaver:
     info_fname = None
     info_ids = None
     info_mark = None
+    info_name = None
+    info_desc = None
+    info_cats = None
     looping = False
     reverse = False
 
@@ -50,6 +53,7 @@ class PictureFileNameSaver:
     screen_ratio = None
     prefix = None
     font = "TkTextFont 10"
+    desc_font = "TkTextFont 16"
     key_func_id = None
     motion_func_id = None
 
@@ -76,16 +80,17 @@ class PictureFileNameSaver:
             hide = win32gui.GetForegroundWindow()
             win32gui.ShowWindow(hide, win32con.SW_HIDE)
 
+        self.prefix = config["data"].get("prefix", "")
         self.db_file_name = config["data"].get("dbFileName", "c:/work/git/pfnss/pfnss.db")
         self.data = Data(self.db_file_name)
-        self.prefix = config["saver"].get("prefix", "")
-        max_file_id = 10
-        try:
-            max_file_id = config["data"].getint("maxFileId", 10)
-            if max_file_id < 1:
-                max_file_id = self.data.get_file_count()
-        except:
-            raise SystemExit("Failed to get file IDs")
+        max_file_id = self.data.get_file_count()
+        if not max_file_id:
+            pic_dir = config["data"].get("pictureDirectory", "/Pictures")
+            self.data.load_files(pic_dir)
+            max_file_id = self.data.get_file_count()
+            if not max_file_id:
+                raise SystemExit(f"No photos in {pic_dir}")
+        max_file_id = config["data"].getint("maxFileId", max_file_id)
         self.file_ids = [i for i in range(1, max_file_id + 1)]
         shuffle_seed = config["data"].getint("seed", 31056)
         seed(shuffle_seed)
@@ -96,7 +101,7 @@ class PictureFileNameSaver:
         except Exception as ex:
             print(f"No log check: {ex}")
 
-        self.info = Frame(self.canvas)
+        self.info = Frame(self.canvas, bg="black")
         self.info_paused = Label(self.info, text="Paused", fg="white", bg="red", font=self.font)
         if self.show_fname:
             self.info_fname = Label(self.info, text="fname", fg="white", bg="black", font=self.font)
@@ -106,9 +111,9 @@ class PictureFileNameSaver:
             self.info_ids.grid(column=3,row=1)
         self.info_mark = Label(self.info, font=self.font)
 
-        self.info_name = Label(self.info, text="name", fg="red", bg="white", font="TkTextFont 14", anchor=W)
-        self.info_desc = Label(self.info, text="name", fg="blue", bg="white", font="TkTextFont 14", anchor=W)
-        self.info_cats = Label(self.info, text="name", fg="black", bg="white", font="TkTextFont 14", anchor=W)
+        self.info_name = Label(self.info, text="name", fg="red", bg="black", font=self.desc_font, anchor=W)
+        self.info_desc = Label(self.info, text="name", fg="white", bg="black", font=self.desc_font, anchor=W)
+        self.info_cats = Label(self.info, text="name", fg="yellow", bg="black", font=self.desc_font, anchor=W)
         
         self.enable_events()
     

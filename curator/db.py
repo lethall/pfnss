@@ -1,5 +1,6 @@
 from sqlite3 import connect
 from datetime import datetime, UTC
+from pathlib import Path
 
 from .photo_info import PhotoInfo
 
@@ -83,3 +84,12 @@ class Data:
                 """, (id, name, description, cats, name, description, cats, id))
             db.commit()
 
+    def load_files(self, picture_dir):
+        p = Path(picture_dir)
+        print(f"Loading files from {p.name}")
+        with connect(self.db_file_name) as db:
+            for f in p.glob(pattern="**/*.jpg", case_sensitive=False):
+                if not f.is_file:
+                    continue
+                db.execute("insert into files (name) values (?)", (str(f),))
+            db.commit()

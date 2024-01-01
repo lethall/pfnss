@@ -33,7 +33,7 @@ class PhotoInfo:
 
         current_row = 1
         ttk.Label(dlg, text="Name:").grid(column=1, row=current_row, sticky=W)
-        ttk.Label(dlg, text="Categories:").grid(column=2, row=current_row, sticky=W)
+        ttk.Label(dlg, text="Categories (CTRL+click multiple):").grid(column=2, row=current_row, sticky=W)
 
         current_row += 1
         name = StringVar(root, value=self.photo_name)
@@ -42,8 +42,9 @@ class PhotoInfo:
 
         category_list = StringVar(value=CATEGORIES)
         lb_categories = Listbox(dlg, selectmode="extended", listvariable=category_list, height=4)
-        for ii in [CATEGORIES.index(cat) for cat in self.chosen_categories]:
-            lb_categories.selection_set(ii)
+        if self.chosen_categories:
+            for ii in [CATEGORIES.index(cat) for cat in self.chosen_categories]:
+                lb_categories.selection_set(ii)
         lb_categories.grid(column=2, row=current_row, rowspan=2, sticky=[N, S, E, W])
         sb = Scrollbar(dlg, orient=VERTICAL, command=lb_categories.yview)
         lb_categories.configure(yscrollcommand=sb.set)
