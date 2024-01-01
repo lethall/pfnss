@@ -3,7 +3,7 @@ import json
 from random import shuffle, seed
 import sys
 import time
-from tkinter import Canvas, Tk, Label, Frame
+from tkinter import Canvas, Tk, Label, Frame, W, E
 
 from PIL import Image, ImageTk
 import requests
@@ -106,9 +106,9 @@ class PictureFileNameSaver:
             self.info_ids.grid(column=3,row=1)
         self.info_mark = Label(self.info, font=self.font)
 
-        self.info_name = Label(self.info, text="name", fg="white", bg="darkblue", font=self.font)
-        self.info_desc = Label(self.info, text="name", fg="white", bg="darkblue", font=self.font)
-        self.info_cats = Label(self.info, text="name", fg="white", bg="darkblue", font=self.font)
+        self.info_name = Label(self.info, text="name", fg="red", bg="white", font="TkTextFont 14", anchor=W)
+        self.info_desc = Label(self.info, text="name", fg="blue", bg="white", font="TkTextFont 14", anchor=W)
+        self.info_cats = Label(self.info, text="name", fg="black", bg="white", font="TkTextFont 14", anchor=W)
         
         self.enable_events()
     
@@ -159,7 +159,7 @@ class PictureFileNameSaver:
             self.info_mark["bg"] = bg_color
             self.info_mark["fg"] = fg_color
             self.info_mark["text"] = msg
-            self.info_mark.grid(column=4, row=1)
+            self.info_mark.grid(column=4, row=1, sticky=[W, E])
         else:
             self.info_mark.grid_forget()
     
@@ -170,13 +170,13 @@ class PictureFileNameSaver:
         info = self.current_info
         if info.photo_name:
             self.info_name["text"] = info.photo_name
-            self.info_name.grid(column=2,row=2)
+            self.info_name.grid(column=1, row=2, sticky=[W, E])
         if info.description:
             self.info_desc["text"] = info.description
-            self.info_desc.grid(column=3,row=2)
+            self.info_desc.grid(column=2, columnspan=2, row=2, sticky=[W, E])
         if info.categories:
             self.info_cats["text"] = info.categories
-            self.info_cats.grid(column=4,row=2)
+            self.info_cats.grid(column=4, row=2, sticky=[W, E])
 
 
     def display(self) -> None:
@@ -273,7 +273,7 @@ class PictureFileNameSaver:
         else:
             print(f"pause {self.current_id}")
             self.paused = True
-            self.info_paused.grid(column=1, row=1)
+            self.info_paused.grid(column=1, row=1, sticky=[W, E])
 
 
     def edit(self) -> None:
