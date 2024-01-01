@@ -75,6 +75,8 @@ class PictureFileNameSaver:
         if len(sys.argv) > 2 and sys.argv[2].lower() == "/s":
             self.motion_enabled = True
         self.motion_enabled = config["saver"].getboolean("stopOnMotion", self.motion_enabled)
+        if not self.motion_enabled:
+            self.canvas["bg"] = "darkgreen"
         self.switch_secs = config["saver"].getint("switchSeconds", 30)
         self.show_fname = config["saver"].getboolean("showFileName", True)
         self.show_id = config["saver"].getboolean("showId", True)

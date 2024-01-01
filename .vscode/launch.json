@@ -12,8 +12,7 @@
       "console": "integratedTerminal",
       "justMyCode": true,
       "args": [
-        "dev.ini",
-        "/S"
+        "dev.ini"
       ]
     },
     {
