@@ -6,7 +6,7 @@ from . import CATEGORIES
 class PhotoInfo:
     file_name : str = None
     photo_name : str = None
-    photo_description : str = None
+    description : str = None
     categories : str = None
     chosen_categories : list = None
 
@@ -18,8 +18,8 @@ class PhotoInfo:
         def save():
             self.chosen_categories = lb_categories.curselection()
             self.categories = ", ".join([CATEGORIES[selected] for selected in self.chosen_categories])
-            self.photo_name = photo_name.get()
-            self.photo_description = photo_description.get()
+            self.photo_name = name.get()
+            self.description = description.get()
             dlg.grab_release()
             dlg.destroy()
 
@@ -36,8 +36,8 @@ class PhotoInfo:
         ttk.Label(dlg, text="Categories:").grid(column=2, row=current_row, sticky=W)
 
         current_row += 1
-        photo_name = StringVar(root, value=self.photo_name)
-        e_photo_name = ttk.Entry(dlg, width=20, textvariable=photo_name)
+        name = StringVar(root, value=self.photo_name)
+        e_photo_name = ttk.Entry(dlg, width=20, textvariable=name)
         e_photo_name.grid(column=1, row=current_row, sticky=[N, W])
 
         category_list = StringVar(value=CATEGORIES)
@@ -51,8 +51,8 @@ class PhotoInfo:
         ttk.Label(dlg, text="Description:").grid(column=1, row=current_row, sticky=[S, W])
 
         current_row += 1
-        photo_description = StringVar(root, value=self.description)
-        e_description = ttk.Entry(dlg, width=40, textvariable=photo_description)
+        description = StringVar(root, value=self.description)
+        e_description = ttk.Entry(dlg, width=40, textvariable=description)
         e_description.grid(column=1, row=current_row, columnspan=2, sticky=W)
 
         current_row += 1
