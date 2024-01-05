@@ -1,16 +1,16 @@
 import configparser
-import json
+# import json
 from random import shuffle, seed
 import sys
 import time
 from tkinter import Canvas, Tk, Label, Frame, W, E
 
 from PIL import Image, ImageTk
-import requests
+# import requests
 
 from .db import Data
-from .config import Configure
 from .photo_info import PhotoInfo
+from .search import Search
 from . import CATEGORIES
 
 win32gui = None
@@ -21,30 +21,26 @@ except:
     print("No win32 support")
 
 class PictureFileNameSaver:
-    db_file_name = None
-    data = None
-    file_ids = None
-    last_seen = None
-    current_id = None
-    current_idx = 0
-    current_info = None
-    paused = False
-    info = None
-    info_paused = None
-    info_fname = None
-    info_ids = None
-    info_mark = None
-    info_name = None
-    info_desc = None
-    info_cats = None
-    looping = False
-    reverse = False
+    db_file_name: str = None
+    data: Data = None
+    shuffle_seed: int = 0
+    search_params: Search = None
+    file_ids: list = None
+    last_seen: int = 0
+    current_id: int = 0
+    current_idx: int = 0
+    current_info: PhotoInfo = None
+    paused: bool = False
+    looping: bool = False
+    reverse: bool = False
 
+    # server logging
     log_url = None
     max_skip_count = None
     switch_secs = None
     terminate = False
 
+    # ui
     root = None
     canvas = None
     img = None
@@ -57,6 +53,16 @@ class PictureFileNameSaver:
     key_func_id = None
     motion_func_id = None
     motion_enabled = False
+
+    # info display widgets
+    info = None
+    info_paused = None
+    info_fname = None
+    info_ids = None
+    info_mark = None
+    info_name = None
+    info_desc = None
+    info_cats = None
 
     def __init__(self) -> None:
         self.root = root = Tk()
@@ -90,24 +96,15 @@ class PictureFileNameSaver:
         self.prefix = config["data"].get("prefix", "")
         self.db_file_name = config["data"].get("dbFileName", "c:/work/git/pfnss/pfnss.db")
         self.data = Data(self.db_file_name)
-        max_file_id = self.data.get_file_count()
-        if not max_file_id:
+        file_count = self.data.get_file_count()
+        if not file_count:
             pic_dir = config["data"].get("pictureDirectory", "/Pictures")
             self.data.load_files(pic_dir)
-            max_file_id = self.data.get_file_count()
-            if not max_file_id:
+            file_count = self.data.get_file_count()
+            if not file_count:
                 raise SystemExit(f"No photos in {pic_dir}")
-        max_file_id = config["data"].getint("maxFileId", max_file_id)
-        self.file_ids = [i for i in range(1, max_file_id + 1)]
-        shuffle_seed = config["data"].getint("seed", 31056)
-        seed(shuffle_seed)
-        shuffle(self.file_ids)
-        self.last_seen = self.file_ids[0]
-        try:
-            self.last_seen = self.data.get_last_seen()
-        except Exception as ex:
-            print(f"No log check: {ex}")
-
+        self.shuffle_seed = config["data"].getint("seed", 31056)
+        self.read_data()
         self.info = Frame(self.canvas, bg="black")
         self.info_paused = Label(self.info, text="Paused", fg="white", bg="red", font=self.font)
         if self.show_fname:
@@ -122,6 +119,16 @@ class PictureFileNameSaver:
         self.info_desc = Label(self.info, text="name", fg="white", bg="black", font=self.desc_font, anchor=W)
         self.info_cats = Label(self.info, text="name", fg="yellow", bg="black", font=self.desc_font, anchor=W)
         self.enable_events()
+
+    def read_data(self):
+        self.file_ids = self.data.get_file_ids()
+        if self.shuffle_seed:
+            seed(self.shuffle_seed)
+            shuffle(self.file_ids)
+        else:
+            print("shuffling is disabled")
+        self.last_seen = self.file_ids[0]
+        self.last_seen = self.data.get_last_seen()
     
     def enable_events(self) -> None:
         self.key_func_id = self.root.bind('<Key>', self.keyboard_event)
@@ -133,10 +140,9 @@ class PictureFileNameSaver:
         self.root.unbind('<Motion>', self.motion_func_id)
 
     def get_file_id(self) -> int:
-        try:
-            self.current_id = self.file_ids[self.current_idx]
-        except:
-            self.current_id = 1
+        if self.current_idx >= len(self.file_ids):
+            self.current_idx = 0
+        self.current_id = self.file_ids[self.current_idx]
         return self.current_id
     
     def prepare_image(self, fname) -> int:
@@ -270,6 +276,13 @@ class PictureFileNameSaver:
             except Exception as exc:
                 print(exc)
             self.enable_events()
+        elif ev.char in ['/', 'f']:
+            self.disable_events()
+            self.search_params = Search()
+            self.search_params.dialog(self.root)
+            self.data.do_search(self.search_params)
+            self.read_data()
+            self.enable_events()
         else:
             print(f"keycode: {ev.keycode} char: '{ev.char}' keysym: {ev.keysym}")
 
@@ -342,8 +355,8 @@ class PictureFileNameSaver:
 
                 if self.log_url and skip_count < self.max_skip_count:
                     try:
-                        o = json.dumps({"ts": ts, "file_no": current_id, "name": current_info.file_name})
-                        requests.post(self.log_url, headers={"Content-Type": "application/json"}, data=o)
+                        # o = json.dumps({"ts": ts, "file_no": current_id, "name": current_info.file_name})
+                        # requests.post(self.log_url, headers={"Content-Type": "application/json"}, data=o)
                         print("reset skip count")
                         skip_count = 0
                     except Exception as e:

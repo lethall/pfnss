@@ -1,16 +1,31 @@
 from sqlite3 import connect
 from datetime import datetime, UTC
 from pathlib import Path
+import re
 
 from .photo_info import PhotoInfo
+from .search import Search
+
+last_reg : re.Pattern = None
+
+def regexp(expr, item):
+    global last_reg
+    if not last_reg or last_reg.pattern != expr:
+        print(f"pattern set to {expr}")
+        last_reg = re.compile(expr)
+    return last_reg.search(item) is not None
+
 
 class Data:
     db_file_name = None
+    searching = False
+
     def __init__(self, db_file_name) -> None:
         self.db_file_name = db_file_name
         with connect(self.db_file_name) as db:
             db.executescript("""
                 CREATE TABLE IF NOT EXISTS files (id integer primary key autoincrement, name);
+                CREATE TABLE IF NOT EXISTS found (id integer primary key);
                 CREATE TABLE IF NOT EXISTS log(ts,file_id integer not null);
                 CREATE TABLE IF NOT EXISTS marks(ts,file_id integer not null,mark);
                 CREATE TABLE IF NOT EXISTS info(file_id integer primary key, name text, description text, categories text);
@@ -20,8 +35,21 @@ class Data:
     def get_file_count(self) -> int:
         count = 0
         with connect(self.db_file_name) as db:
-            count = int(db.execute("select count(*) from files").fetchone()[0])
+            table_name = "found" if self.searching else "files"
+            count = int(db.execute(f"select count(*) from {table_name}").fetchone()[0])
         return count
+    
+    def get_file_ids(self) -> list:
+        ids = []
+        with connect(self.db_file_name) as db:
+            table_name = "found" if self.searching else "files"
+            c = db.execute(f"select id from {table_name}")
+            while True:
+                r = c.fetchone()
+                if not r:
+                    break
+                ids.append(int(r[0]))
+        return ids
     
     def get_last_seen(self) -> int:
         last_seen = 0
@@ -84,7 +112,7 @@ class Data:
                 """, (id, name, description, cats, name, description, cats, id))
             db.commit()
 
-    def load_files(self, picture_dir):
+    def load_files(self, picture_dir) -> None:
         p = Path(picture_dir)
         print(f"Loading files from {p.name}")
         with connect(self.db_file_name) as db:
@@ -93,3 +121,21 @@ class Data:
                     continue
                 db.execute("insert into files (name) values (?)", (str(f),))
             db.commit()
+
+    def do_search(self, search_params: Search) -> int:
+        count = 0
+        where = search_params.compile()
+        with connect(self.db_file_name) as db:
+            if "REGEXP" in where.upper():
+                db.create_function("REGEXP", 2, regexp)
+            count = int(db.execute(f"select count(*) from files {where}").fetchone()[0])
+            if not count:
+                self.searching = False
+                return count
+            self.searching = True
+            print(f"found {count} items")
+            db.execute("delete from found")
+            db.commit()
+            db.execute(f"insert into found (id) select id from files {where}")
+            db.commit()
+        return self.get_file_count()
