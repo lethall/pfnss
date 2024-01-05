@@ -111,6 +111,13 @@ class Data:
                 on conflict do update set name=?, description=?, categories=? where file_id=?
                 """, (id, name, description, cats, name, description, cats, id))
             db.commit()
+    
+    def delete_file(self, id):
+        with connect(self.db_file_name) as db:
+            print(f"deleting file {id}")
+            db.execute("delete from files where id = ?", (id,))
+            db.commit()
+
 
     def load_files(self, picture_dir) -> None:
         p = Path(picture_dir)
