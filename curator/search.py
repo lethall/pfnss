@@ -15,4 +15,4 @@ class Search:
         pass
 
     def compile(self) -> str:
-        return "where name REGEXP '.*samson.*'"
+        return "where name regexp '.*samson.*'"

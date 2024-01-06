@@ -15,6 +15,10 @@ class PhotoInfo:
         self.chosen_categories = self.categories.split(", ") if self.categories else None
     
     def dialog(self, root : Toplevel) -> None:
+        dlg = Toplevel(root)
+        dlg.geometry("+10+50")
+        dlg.title("Photo Information")
+
         def save():
             self.chosen_categories = lb_categories.curselection()
             self.categories = ", ".join([CATEGORIES[selected] for selected in self.chosen_categories])
@@ -26,10 +30,6 @@ class PhotoInfo:
         def cancel():
             dlg.grab_release()
             dlg.destroy()
-
-        dlg = Toplevel(root)
-        dlg.geometry("+10+50")
-        dlg.title("Photo Information")
 
         current_row = 1
         ttk.Label(dlg, text="Name:").grid(column=1, row=current_row, sticky=W)

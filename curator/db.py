@@ -12,14 +12,6 @@ class Data:
     searching = False
     last_reg : re.Pattern = None
 
-    @staticmethod
-    def regexp(expr, item):
-        last_reg = Data.last_reg
-        if not last_reg or last_reg.pattern != expr:
-            print(f"pattern set to {expr}")
-            Data.last_reg = last_reg = re.compile(expr)
-        return last_reg.search(item) is not None
-
     def __init__(self, db_file_name) -> None:
         self.db_file_name = db_file_name
         with connect(self.db_file_name) as db:
@@ -134,15 +126,20 @@ class Data:
         where = search_params.compile()
         with connect(self.db_file_name) as db:
             if "REGEXP" in where.upper():
-                db.create_function("REGEXP", 2, self.regexp)
+                def regexp(expr, item):
+                    last_reg = Data.last_reg
+                    if not last_reg or last_reg.pattern != expr:
+                        print(f"Data pattern set to {expr}")
+                        Data.last_reg = last_reg = re.compile(expr)
+                    return last_reg.search(item) is not None
+                db.create_function("REGEXP", 2, regexp)
             count = int(db.execute(f"select count(*) from files {where}").fetchone()[0])
             if not count:
                 self.searching = False
                 return count
             self.searching = True
-            print(f"found {count} items")
+            print(f"found {count} items, reloading")
             db.execute("delete from found")
-            db.commit()
             db.execute(f"insert into found (id) select id from files {where}")
             db.commit()
         return self.get_file_count()

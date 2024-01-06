@@ -86,11 +86,12 @@ Written entirely in Go using Wails for the UI. Provides a configuration screen.
 Considering Java, C++, Godot 4.1, or Python - settled on Python and Tkinter frozen by PyInstaller
 
 ### Fixes
-- file name search
+- search
+- move processing
 - log to server
-- status of move processing
 - status of DB creation
 - icon
+- help screen **DONE**
 - no click (mouse move to stop) **DONE**
 - categories for save  **DONE**
 - DB creation **DONE**

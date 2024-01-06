@@ -11,6 +11,7 @@ from PIL import Image, ImageTk
 from .db import Data
 from .photo_info import PhotoInfo
 from .search import Search
+from .help import Help
 from . import CATEGORIES
 
 win32gui = None
@@ -260,10 +261,6 @@ class PictureFileNameSaver:
             self.mark(' ')
         elif ev.char == ' ' or ev.keycode == 13:
             self.resume()
-        elif ev.char == 'e':
-            self.edit()
-        elif ev.char == 'm':
-            self.mail()
         elif ev.char == 'i':
             self.disable_events()
             try:
@@ -276,7 +273,7 @@ class PictureFileNameSaver:
             except Exception as exc:
                 print(exc)
             self.enable_events()
-        elif ev.char in ['/', 'f']:
+        elif ev.char == "/":
             self.disable_events()
             self.search_params = Search()
             self.search_params.dialog(self.root)
@@ -285,6 +282,12 @@ class PictureFileNameSaver:
             self.enable_events()
         else:
             print(f"keycode: {ev.keycode} char: '{ev.char}' keysym: {ev.keysym}")
+            self.disable_events()
+            help = Help()
+            help.dialog(self.root, ev.keysym)
+            self.enable_events()
+            if help.key_event:
+                self.root.after(100, self.keyboard_event(help.key_event))
 
     def mark(self, mark="save") -> None:
         self.data.save(self.current_id, mark[0])
@@ -299,13 +302,6 @@ class PictureFileNameSaver:
             print(f"pause {self.current_id}")
             self.paused = True
             self.info_paused.grid(column=1, row=1, sticky=[W, E])
-
-
-    def edit(self) -> None:
-        print(f"edit {self.current_id}")
-
-    def mail(self) -> None:
-        print(f"mail {self.current_id}")
 
     def motion_event(self, ev) -> None:
         self.end_loop(ev)
