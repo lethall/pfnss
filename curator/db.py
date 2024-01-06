@@ -6,19 +6,19 @@ import re
 from .photo_info import PhotoInfo
 from .search import Search
 
-last_reg : re.Pattern = None
-
-def regexp(expr, item):
-    global last_reg
-    if not last_reg or last_reg.pattern != expr:
-        print(f"pattern set to {expr}")
-        last_reg = re.compile(expr)
-    return last_reg.search(item) is not None
-
 
 class Data:
     db_file_name = None
     searching = False
+    last_reg : re.Pattern = None
+
+    @staticmethod
+    def regexp(expr, item):
+        last_reg = Data.last_reg
+        if not last_reg or last_reg.pattern != expr:
+            print(f"pattern set to {expr}")
+            Data.last_reg = last_reg = re.compile(expr)
+        return last_reg.search(item) is not None
 
     def __init__(self, db_file_name) -> None:
         self.db_file_name = db_file_name
@@ -134,7 +134,7 @@ class Data:
         where = search_params.compile()
         with connect(self.db_file_name) as db:
             if "REGEXP" in where.upper():
-                db.create_function("REGEXP", 2, regexp)
+                db.create_function("REGEXP", 2, self.regexp)
             count = int(db.execute(f"select count(*) from files {where}").fetchone()[0])
             if not count:
                 self.searching = False
