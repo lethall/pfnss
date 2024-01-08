@@ -1,4 +1,4 @@
-from tkinter import Toplevel, ttk, W, E, RIDGE
+from tkinter import Toplevel, Frame, Label, W, E
 
 class Help:
     key_event = None
@@ -11,7 +11,8 @@ class Help:
     def dialog(self, root : Toplevel, keysym = None) -> None:
         dlg = Toplevel(root)
         dlg.title("Help")
-        dlg.geometry("400x300+569+338")
+        w, h = 350, 350
+        dlg.geometry(f"{w}x{h}+{(root.winfo_screenwidth() - w) // 2}+{(root.winfo_screenheight() - h) // 2}")
 
         def cancel(ev=None):
             self.key_event = ev
@@ -19,19 +20,24 @@ class Help:
             dlg.grab_release()
             dlg.destroy()
 
-        self.frame = frame = ttk.Frame(dlg)
+        dlg.columnconfigure(0, weight=1)
+        dlg.rowconfigure(0, weight=1)
+        self.frame = frame = Frame(dlg)
+        frame.grid(column=0, row=0)
+        frame.columnconfigure(1, weight=1)
+        frame.columnconfigure(2, weight=3)
             
         current_row = 1
-        ttk.Label(frame, text=f"You pressed {keysym}").grid(column=1, row=current_row, columnspan=2, sticky=W)
+        Label(frame, text=f"You pressed {keysym}").grid(column=1, row=current_row, columnspan=2, sticky=W)
 
         current_row += 1
-        ttk.Label(frame, text=" ").grid(column=1, row=current_row, columnspan=2, sticky=W)
+        Label(frame, text=" ").grid(column=1, row=current_row, columnspan=2, sticky=W)
 
         current_row += 1
-        ttk.Label(frame, text="Press any of these keys instead:").grid(column=1, row=current_row, columnspan=2, sticky=W)
+        Label(frame, text="Press any of these keys instead:").grid(column=1, row=current_row, columnspan=2, sticky=W)
 
         current_row += 1
-        ttk.Label(frame, text=" ").grid(column=1, row=current_row, columnspan=2, sticky=W)
+        Label(frame, text=" ").grid(column=1, row=current_row, columnspan=2, sticky=W)
 
         self.current_row = current_row
         self.keydef("s", "marks photo to be saved")
@@ -45,16 +51,6 @@ class Help:
         self.keydef("p or Left or Up", "Skip to prior photo")
         self.keydef("q or Escape", "quit")
 
-        frame.grid(column=1, row=1)
-        # frame.update()
-        w = frame.winfo_width()
-        h = frame.winfo_height()
-        x = (root.winfo_screenwidth() - w) // 2
-        y = (root.winfo_screenheight() - h) // 2
-        geom = f"{w}x{h}+{x}+{y}"
-        print(geom)
-        # dlg.geometry(geom)
-
         dlg.protocol("WM_DELETE_WINDOW", cancel)
         dlg.transient(root)
         dlg.bind_all("<Key>", cancel)
@@ -64,5 +60,5 @@ class Help:
     
     def keydef(self, key_label, key_desc) -> None:
         self.current_row  += 1
-        ttk.Label(self.frame, text=key_label).grid(column=1, row=self.current_row, padx=5, sticky=E)
-        ttk.Label(self.frame, text=f"- {key_desc}").grid(column=2, row=self.current_row, sticky=W)
+        Label(self.frame, text=key_label).grid(column=1, row=self.current_row, padx=5, sticky=E)
+        Label(self.frame, text=f"- {key_desc}").grid(column=2, row=self.current_row, sticky=W)
