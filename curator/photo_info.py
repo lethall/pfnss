@@ -19,7 +19,7 @@ class PhotoInfo:
         dlg.geometry("+10+50")
         dlg.title("Photo Information")
 
-        def save():
+        def save(ev = None):
             self.chosen_categories = lb_categories.curselection()
             self.categories = ", ".join([CATEGORIES[selected] for selected in self.chosen_categories])
             self.photo_name = name.get()
@@ -27,7 +27,7 @@ class PhotoInfo:
             dlg.grab_release()
             dlg.destroy()
 
-        def cancel():
+        def cancel(ev = None):
             dlg.grab_release()
             dlg.destroy()
 
@@ -61,6 +61,9 @@ class PhotoInfo:
         current_row += 1
         ttk.Button(dlg, text="Cancel", command=cancel).grid(column=1, row=current_row, sticky=[S, W])
         ttk.Button(dlg, text="Save", command=save).grid(column=2, row=current_row, sticky=[S, E])
+
+        dlg.bind("<Escape>", cancel)
+        dlg.bind("<Return>", save)
 
         dlg.protocol("WM_DELETE_WINDOW", cancel)
         dlg.transient(root)

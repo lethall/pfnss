@@ -10,8 +10,8 @@ class Help:
 
     def dialog(self, root : Toplevel, keysym = None) -> None:
         dlg = Toplevel(root)
-        dlg.geometry("+200+200")
         dlg.title("Help")
+        dlg.geometry("400x300+569+338")
 
         def cancel(ev=None):
             self.key_event = ev
@@ -20,7 +20,6 @@ class Help:
             dlg.destroy()
 
         self.frame = frame = ttk.Frame(dlg)
-        frame.grid(column=1, row=1)
             
         current_row = 1
         ttk.Label(frame, text=f"You pressed {keysym}").grid(column=1, row=current_row, columnspan=2, sticky=W)
@@ -45,6 +44,16 @@ class Help:
         self.keydef("n or Right or Down", "Skip to next photo")
         self.keydef("p or Left or Up", "Skip to prior photo")
         self.keydef("q or Escape", "quit")
+
+        frame.grid(column=1, row=1)
+        # frame.update()
+        w = frame.winfo_width()
+        h = frame.winfo_height()
+        x = (root.winfo_screenwidth() - w) // 2
+        y = (root.winfo_screenheight() - h) // 2
+        geom = f"{w}x{h}+{x}+{y}"
+        print(geom)
+        # dlg.geometry(geom)
 
         dlg.protocol("WM_DELETE_WINDOW", cancel)
         dlg.transient(root)

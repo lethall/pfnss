@@ -54,6 +54,7 @@ class PictureFileNameSaver:
     key_func_id = None
     motion_func_id = None
     motion_enabled = False
+    motion_time = 0.0
 
     # info display widgets
     info = None
@@ -134,6 +135,7 @@ class PictureFileNameSaver:
     def enable_events(self) -> None:
         self.key_func_id = self.root.bind('<Key>', self.keyboard_event)
         if self.motion_enabled:
+            self.motion_time = time.time() + 3
             self.motion_func_id = self.root.bind('<Motion>', self.motion_event)
 
     def disable_events(self) -> None:
@@ -304,7 +306,8 @@ class PictureFileNameSaver:
             self.info_paused.grid(column=1, row=1, sticky=[W, E])
 
     def motion_event(self, ev) -> None:
-        self.end_loop(ev)
+        if time.time() > self.motion_time:
+            self.end_loop(ev)
 
     def previous(self) -> None:
         self.reverse = True
