@@ -1,4 +1,4 @@
-from tkinter import Toplevel, Frame, Label, W, E
+from tkinter import Toplevel, Frame, Label, N, W, E
 
 class Help:
     key_event = None
@@ -11,7 +11,7 @@ class Help:
     def dialog(self, root : Toplevel, keysym = None) -> None:
         dlg = Toplevel(root)
         dlg.title("Help")
-        w, h = 350, 350
+        w, h = 350, 300
         dlg.geometry(f"{w}x{h}+{(root.winfo_screenwidth() - w) // 2}+{(root.winfo_screenheight() - h) // 2}")
 
         def cancel(ev=None):
@@ -23,18 +23,15 @@ class Help:
         dlg.columnconfigure(0, weight=1)
         dlg.rowconfigure(0, weight=1)
         self.frame = frame = Frame(dlg)
-        frame.grid(column=0, row=0)
+        frame.grid(column=0, row=0, sticky=N)
         frame.columnconfigure(1, weight=1)
         frame.columnconfigure(2, weight=3)
             
-        current_row = 1
-        Label(frame, text=f"You pressed {keysym}").grid(column=1, row=current_row, columnspan=2, sticky=W)
+        current_row = 0
+        Label(frame, text=f"You pressed {keysym}", fg="red").grid(column=1, row=current_row, columnspan=2, sticky=W)
 
         current_row += 1
-        Label(frame, text=" ").grid(column=1, row=current_row, columnspan=2, sticky=W)
-
-        current_row += 1
-        Label(frame, text="Press any of these keys instead:").grid(column=1, row=current_row, columnspan=2, sticky=W)
+        Label(frame, text="Press any of these keys instead:", fg="green").grid(column=1, row=current_row, columnspan=2, sticky=W)
 
         current_row += 1
         Label(frame, text=" ").grid(column=1, row=current_row, columnspan=2, sticky=W)
@@ -44,8 +41,7 @@ class Help:
         self.keydef("d", "marks photo to be deleted")
         self.keydef("r", "resets mark from photo")
         self.keydef("i", "info for photo")
-        self.keydef("f", "find photos")
-        self.keydef("/", "clear search")
+        self.keydef("/", "find photos")
         self.keydef("SPACE or ENTER", "pause/resume on current photo")
         self.keydef("n or Right or Down", "Skip to next photo")
         self.keydef("p or Left or Up", "Skip to prior photo")

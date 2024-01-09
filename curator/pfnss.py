@@ -277,7 +277,8 @@ class PictureFileNameSaver:
             self.enable_events()
         elif ev.char == "/":
             self.disable_events()
-            self.search_params = Search()
+            if not self.search_params:
+                self.search_params = Search()
             self.search_params.dialog(self.root)
             self.data.do_search(self.search_params)
             self.read_data()
