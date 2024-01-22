@@ -121,9 +121,11 @@ class Data:
                 db.execute("insert into files (name) values (?)", (str(f),))
             db.commit()
 
-    def do_search(self, search_params: Search) -> int:
+    def do_search(self, search_params: Search) -> None:
         count = 0
         where = search_params.compile()
+        if not where:
+            where = ""
         with connect(self.db_file_name) as db:
             if "REGEXP" in where.upper():
                 def regexp(expr, item):
@@ -136,10 +138,9 @@ class Data:
             count = int(db.execute(f"select count(*) from files {where}").fetchone()[0])
             if not count:
                 self.searching = False
-                return count
+                return
             self.searching = True
             print(f"found {count} items, reloading")
             db.execute("delete from found")
             db.execute(f"insert into found (id) select id from files {where}")
             db.commit()
-        return self.get_file_count()

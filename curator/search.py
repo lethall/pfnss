@@ -45,17 +45,17 @@ class Search:
                 return None
 
         def find(ev = None):
-            self.file_name_pattern = file_name_var.get()
-            self.name_pattern = name_var.get()
-            self.descr_pattern = descr_var.get()
-            self.cat_pattern = cat_var.get()
+            self.file_name_pattern = file_name_var.get().strip()
+            self.name_pattern = name_var.get().strip()
+            self.descr_pattern = descr_var.get().strip()
+            self.cat_pattern = cat_var.get().strip()
             self.id_start = int_or_null(id_start_var)
             self.id_end = int_or_null(id_end_var)
             self.seq_start = int_or_null(seq_start_var)
             self.seq_end = int_or_null(seq_end_var)
             try:
-                self.ts_start = ts_start_var.get()
-                self.ts_end = ts_end_var.get()
+                self.ts_start = ts_start_var.get().strip()
+                self.ts_end = ts_end_var.get().strip()
             except:
                 self.ts_start = self.ts_end = None
             dlg.grab_release()
@@ -137,4 +137,35 @@ class Search:
         # sequence number range
         # seen timestamp range
     def compile(self) -> str:
-        return "where name regexp '.*samson.*'"
+        where_clause = []
+
+        if self.file_name_pattern:
+            s = self.file_name_pattern
+            if s.startswith(("^", ".", "[")):
+                where_clause.append(f"name REGEXP '{s}'")
+            else:
+                where_clause.append(f"name LIKE '%{s}%'")
+
+        if self.name_pattern:
+            s = self.name_pattern
+            prefix = "(id in (select file_id from info where info.name"
+            if s.startswith(("^", ".", "[")):
+                where_clause.append(f"{prefix} REGEXP '{s}'))")
+            else:
+                where_clause.append(f"{prefix} LIKE '%{s}%'))")
+
+        if self.descr_pattern:
+            s = self.descr_pattern
+            prefix = "(id in (select file_id from info where info.description"
+            if s.startswith(("^", ".", "[")):
+                where_clause.append(f"{prefix} REGEXP '{s}'))")
+            else:
+                where_clause.append(f"{prefix} LIKE '%{s}%'))")
+
+        if self.cat_pattern:
+            subselect = [f"(info.categories LIKE '%{part}%')" for part in self.cat_pattern.split(" ")]                
+            where_clause.append(f"(id in (select file_id from info where {' AND '.join(subselect)}))")
+
+        if where_clause:
+            return "where " + " AND ".join(where_clause)
+        return None
