@@ -25,14 +25,6 @@ class Search:
         dlg.geometry(f"{w}x{h}+{(root.winfo_screenwidth() - w) // 2}+{(root.winfo_screenheight() - h) // 2}")
         dlg.resizable(False, False)
 
-        # file name pattern
-        # friendly name pattern
-        # description pattern
-        # categories
-        # all of the above
-        # file id
-        # sequence number range
-        # seen timestamp range
         file_name_var: StringVar = StringVar(dlg, value=self.file_name_pattern)
         name_var: StringVar = StringVar(dlg, value=self.name_pattern)
         descr_var: StringVar = StringVar(dlg, value=self.descr_pattern)
@@ -135,5 +127,14 @@ class Search:
             Entry(frm, textvariable=end_var, width=field_width).grid(column=4, row=1)
         self.current_row += 1
 
+
+        # file name pattern
+        # friendly name pattern
+        # description pattern
+        # categories
+        # all of the above
+        # file id
+        # sequence number range
+        # seen timestamp range
     def compile(self) -> str:
         return "where name regexp '.*samson.*'"

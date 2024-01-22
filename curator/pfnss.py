@@ -1,6 +1,8 @@
 import configparser
 # import json
+from pathlib import Path
 from random import shuffle, seed
+import shutil
 import sys
 import time
 from tkinter import Canvas, Tk, Label, Frame, W, E
@@ -23,6 +25,7 @@ except:
 
 class PictureFileNameSaver:
     db_file_name: str = None
+    save_folder: Path = None
     data: Data = None
     shuffle_seed: int = 0
     search_params: Search = None
@@ -96,6 +99,7 @@ class PictureFileNameSaver:
             win32gui.ShowWindow(hide, win32con.SW_HIDE)
 
         self.prefix = config["data"].get("prefix", "")
+        self.save_folder = Path(config["data"].get("saveDirectory", "~/Desktop")).resolve()
         self.db_file_name = config["data"].get("dbFileName", "c:/work/git/pfnss/pfnss.db")
         self.data = Data(self.db_file_name)
         file_count = self.data.get_file_count()
@@ -248,6 +252,12 @@ class PictureFileNameSaver:
         except:
             print("Messy finish")
 
+    def save(self):
+        from_file_name = self.current_info.file_name
+        to_file_name = self.save_folder / Path(from_file_name).name
+        shutil.copyfile(from_file_name, to_file_name)
+            
+    
     def keyboard_event(self, ev) -> None:
         if ev.keysym in ["Left", "Up"] or ev.char == 'p':
             self.previous()
@@ -257,6 +267,7 @@ class PictureFileNameSaver:
             self.end_loop(ev)
         elif ev.char == 's':
             self.mark(ev.char)
+            self.save()
         elif ev.char == 'd':
             self.mark(ev.char)
         elif ev.char == 'r':
