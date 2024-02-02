@@ -50,6 +50,16 @@
       "console": "integratedTerminal",
       "justMyCode": true,
       "args": []
+    },
+    {
+      "name": "Python: CurDir",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      "cwd": "${fileDirname}",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "args": []
     }
   ]
 }
